@@ -2,6 +2,8 @@ package net.thumbtack.research.nosql.clients;
 
 import net.thumbtack.research.nosql.Configurator;
 
+import java.nio.ByteBuffer;
+
 /**
  * User: vkornev
  * Date: 12.08.13
@@ -9,8 +11,8 @@ import net.thumbtack.research.nosql.Configurator;
  *
  * General interface for base method of NoSQL data bases
  */
-public interface Database<T> {
+public interface Database {
     void init(Configurator configurator);
-    void Write(String key, T value);
-    T read(String key);
+    void Write(String key, ByteBuffer value);
+    ByteBuffer read(String key);
 }

@@ -12,11 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-public class CassandraClient implements Database<Map<String, String>> {
+public class CassandraClient implements Database {
     private static final String DEFAULT_HOST = "localhost";
     private static final int DEFAULT_PORT = 3333;
     private static final String KEY_SPACE_PROPERTY = "keySpace";
@@ -62,14 +60,14 @@ public class CassandraClient implements Database<Map<String, String>> {
     }
 
     @Override
-    public void Write(String key, Map<String, String> value) {
+    public void Write(String key, ByteBuffer value) {
         // TODO : implement write to database
     }
 
     @Override
-    public Map<String, String> read(String key) {
+    public ByteBuffer read(String key) {
         SlicePredicate predicate;
-        Map<String, String> result = new HashMap<String, String>();
+        ByteBuffer result = null;
         ColumnParent parent = new ColumnParent(columnFamily);
 
         predicate = new SlicePredicate().setSlice_range(
@@ -83,20 +81,7 @@ public class CassandraClient implements Database<Map<String, String>> {
                 readConsistencyLevel
             );
             for (ColumnOrSuperColumn column : results) {
-                ByteBuffer nameBuffer = column.column.name;
-                ByteBuffer valueBuffer = column.column.value;
-                result.put(
-                    new String(
-                        nameBuffer.array(),
-                        nameBuffer.position() + nameBuffer.arrayOffset(),
-                        nameBuffer.remaining()
-                    ),
-                    new String(
-                        valueBuffer.array(),
-                        valueBuffer.position() + valueBuffer.arrayOffset(),
-                        valueBuffer.remaining()
-                    )
-                );
+                result = column.column.value;
             }
             return result;
         } catch (TException e) {
