@@ -5,6 +5,8 @@ import net.thumbtack.research.nosql.clients.DatabasePool;
 import net.thumbtack.research.nosql.scenarios.Scenario;
 import net.thumbtack.research.nosql.scenarios.ScenarioPool;
 import org.apache.commons.cli.*;
+import org.javasimon.SimonManager;
+import org.javasimon.Stopwatch;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,12 +51,11 @@ public class Researcher {
 
         Configurator config = new Configurator(commandLine.getOptionValue(CLI_CONFIG));
         ThreadPoolExecutor threadPool = new ThreadPoolExecutor(threadsCount, threadsCount, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
-        List<Long> successfulWrites = new ArrayList<>();
-        List<Long> failedWrites = new ArrayList<>();
 
         List<Database> dbs = new ArrayList<Database>(threadsCount);
         Database db;
 
+	    log.info("Initializing clients...");
         for (int i=0; i < threadsCount; i++) {
             try {
                 db = DatabasePool.get(commandLine.getOptionValue(CLI_DATABASE));
@@ -67,12 +68,11 @@ public class Researcher {
             }
         }
 
-        log.info("Start scenarios");
-
+	    log.info("Scheduling tests...");
         for (Database initDB : dbs) {
             try {
                 Scenario sc = ScenarioPool.get(commandLine.getOptionValue(CLI_SCENARIO));
-                sc.init(initDB, writesCount / threadsCount, successfulWrites, failedWrites);
+                sc.init(initDB, writesCount / threadsCount);
                 threadPool.submit(sc);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -81,22 +81,28 @@ public class Researcher {
             }
         }
 
-
+	    log.info("Running tests...");
         while (threadPool.getActiveCount() > 0) {}
 
+	    log.info("Shutting down clients...");
         threadPool.shutdown();
 
-        long successful = 0;
-        for (Long s: successfulWrites) {
-            successful += s;
-        }
-        long failed = 0;
-        for (Long f: failedWrites) {
-            failed += f;
-        }
+	    log.info("Tests complete");
 
-        log.warn("Total writes: " + (successful + failed));
+        long successful = ResearcherReport.successes.getCounter();
+        long failed = ResearcherReport.failures.getCounter();
+
+	    log.warn("---------------------------------------------------------------------");
+        log.warn("Total writes: " + successful + failed);
         log.warn("Failed writes: " + failed);
+	    log.warn("Action timings: total={}ms, min={}ms, mean={}ms, max={}ms",
+			    new Object [] {
+					    new Long(ResearcherReport.actions.getTotal() / 1000000),
+					    new Long(ResearcherReport.actions.getMin() / 1000000),
+					    new Double(ResearcherReport.actions.getMean() / 1000000),
+					    new Long(ResearcherReport.actions.getMax() / 1000000)
+			    }
+	    );
     }
 
     private static Options getOptions() {
@@ -122,4 +128,5 @@ public class Researcher {
         }
         return true;
     }
+
 }
