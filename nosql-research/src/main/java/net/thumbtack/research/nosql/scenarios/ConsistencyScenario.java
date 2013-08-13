@@ -1,10 +1,12 @@
 package net.thumbtack.research.nosql.scenarios;
 
+import net.thumbtack.research.nosql.clients.Database;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -16,14 +18,20 @@ import java.util.UUID;
  */
 public class ConsistencyScenario extends Scenario {
     private static final Logger log = LoggerFactory.getLogger(ConsistencyScenario.class);
+    private String key;
+
+    @Override
+    public void init(Database database, long writesCount, List<Long> successfulWrites, List<Long> failedWrites) {
+        super.init(database, writesCount, successfulWrites, failedWrites);
+        key = UUID.randomUUID().toString();
+    }
 
     @Override
     protected void action() throws Exception {
-        String key = UUID.randomUUID().toString();
-        ByteBuffer value = ByteBuffer.wrap(key.getBytes("UTF-8"));
+        ByteBuffer value = ByteBuffer.wrap(UUID.randomUUID().toString().getBytes("UTF-8"));
         db.write(key, value);
         if (!value.equals(db.read(key))) {
-            log.warn("Wrote and read values is different. Key: " + key);
+            log.warn("Written and read values are different. Key: " + key + "; Read data: " + new String(value.array(), "UTF-8"));
             fw++;
         }
         else {

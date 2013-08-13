@@ -2,6 +2,7 @@ package net.thumbtack.research.nosql.clients;
 
 import net.thumbtack.research.nosql.Configurator;
 import org.apache.cassandra.locator.NetworkTopologyStrategy;
+import org.apache.cassandra.locator.SimpleStrategy;
 import org.apache.cassandra.thrift.*;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -76,17 +77,27 @@ public class CassandraClient implements Database {
 
             String keyspace = configurator.getString(KEY_SPACE_PROPERTY, DEFAULT_KEY_SPACE);
             String replicationFactor = configurator.getString(REPLICATION_FACTOR_PROPERTY, DEFAULT_REPLICATION_FACTOR);
+            columnFamily = configurator.getString(COLUMN_FAMILY_PROPERTY, DEFAULT_COLUMN_FAMILY);
+            columnName = configurator.getString(COLUMN_NAME_PROPERTY, DEFAULT_COLUMN_NAME);
 
-            KsDef ksDef = client.describe_keyspace(keyspace);
-            if (ksDef == null) {
+            KsDef ksDef;
+            try {
+                ksDef = client.describe_keyspace(keyspace);
+                ksDef.strategy_options.put("replication_factor", replicationFactor);
+                ksDef.cf_defs.clear();
+                client.system_update_keyspace(ksDef);
+            }
+            catch (NotFoundException e) {
                 List<CfDef> cfDefList = new ArrayList<>();
                 CfDef cfDef = new CfDef(keyspace, columnFamily);
                 cfDefList.add(cfDef);
-                ksDef = new KsDef(keyspace, NetworkTopologyStrategy.class.getName(), cfDefList);
+                ksDef = new KsDef(keyspace, SimpleStrategy.class.getName(), cfDefList);
+                Map<String, String> strategyOptions = new HashMap<>();
+                strategyOptions.put("replication_factor", replicationFactor);
+                ksDef.setStrategy_options(strategyOptions);
                 client.system_add_keyspace(ksDef);
             }
-            ksDef.strategy_options.put("replication_factor", replicationFactor);
-            client.system_update_keyspace(ksDef);
+
             client.set_keyspace(keyspace);
 
             readConsistencyLevel = getConsistencyLevel(
@@ -99,8 +110,6 @@ public class CassandraClient implements Database {
                     WRITE_CONSISTENCY_LEVEL_PROPERTY,
                     ConsistencyLevel.ONE
             );
-            columnFamily = configurator.getString(COLUMN_FAMILY_PROPERTY, DEFAULT_COLUMN_FAMILY);
-            columnName = configurator.getString(COLUMN_NAME_PROPERTY, DEFAULT_COLUMN_NAME);
 
             client.truncate(columnFamily);
         } catch (TException e) {
