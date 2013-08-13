@@ -1,4 +1,4 @@
-package net.thumbtack.research.nosql;
+package net.thumbtack.research.nosql.clients;
 
 import net.thumbtack.research.nosql.Configurator;
 import org.apache.cassandra.thrift.*;
@@ -38,6 +38,7 @@ public class CassandraClient implements Database {
     private String columnFamily;
 
     private Cassandra.Client client;
+    private TTransport transport;
 
 
     CassandraClient() {
@@ -47,7 +48,7 @@ public class CassandraClient implements Database {
     @Override
     public void init(Configurator configurator) {
         try {
-            TTransport transport = new TFramedTransport(new TSocket(
+            transport = new TFramedTransport(new TSocket(
                     configurator.getHost(DEFAULT_HOST),
                     configurator.getPort(DEFAULT_PORT))
             );
@@ -109,9 +110,9 @@ public class CassandraClient implements Database {
     }
 
     @Override
-    public ByteBuffer read(String key) {
+    public Map<String, String> read(String key) {
         SlicePredicate predicate;
-        ByteBuffer result = null;
+        Map<String, String> result = new HashMap<String, String>();
         ColumnParent parent = new ColumnParent(columnFamily);
 
         predicate = new SlicePredicate().setSlice_range(
@@ -125,7 +126,20 @@ public class CassandraClient implements Database {
                 readConsistencyLevel
             );
             for (ColumnOrSuperColumn column : results) {
-                result = column.column.value;
+                ByteBuffer nameBuffer = column.column.name;
+                ByteBuffer valueBuffer = column.column.value;
+                result.put(
+                    new String(
+                        nameBuffer.array(),
+                        nameBuffer.position() + nameBuffer.arrayOffset(),
+                        nameBuffer.remaining()
+                    ),
+                    new String(
+                        valueBuffer.array(),
+                        valueBuffer.position() + valueBuffer.arrayOffset(),
+                        valueBuffer.remaining()
+                    )
+                );
             }
             return result;
         } catch (TException e) {
@@ -138,11 +152,30 @@ public class CassandraClient implements Database {
         return null;
     }
 
+    private void authenticate(Configurator configurator) throws TException {
+        String username = configurator.getString(USERNAME_PROPERTY, null);
+        if(username != null) {
+            Map<String, String> cred = new HashMap<String, String>(2);
+            cred.put(USERNAME_PROPERTY, username);
+            String password = configurator.getString(PASSWORD_PROPERTY, null);
+            if(password != null) {
+                cred.put(PASSWORD_PROPERTY, password);
+            }
+            AuthenticationRequest req = new AuthenticationRequest(cred);
+            client.login(req);
+        }
+    }
+
     private ConsistencyLevel getConsistencyLevel(Configurator configurator, String name, ConsistencyLevel def) {
         String levelName = configurator.getString(name, null);
         if(levelName != null && ConsistencyLevel.valueOf(levelName) != null) {
             return ConsistencyLevel.valueOf(levelName);
         }
         return def;
+    }
+
+    @Override
+    public void close() throws Exception {
+        transport.close();
     }
 }
