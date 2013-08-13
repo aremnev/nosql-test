@@ -1,8 +1,14 @@
 package net.thumbtack.research.nosql;
 
+import net.thumbtack.research.nosql.clients.Database;
+import net.thumbtack.research.nosql.clients.DatabasePool;
+import net.thumbtack.research.nosql.scenarios.ScenarioPool;
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * User: vkornev
@@ -19,27 +25,66 @@ public class Researcher {
 
     private static final String CLI_CONFIG = "config";
     private static final String CLI_DATABASE = "database";
+    private static final String CLI_SCENARIO = "scenario";
+    private static final String CLI_THREADS = "threads";
+    private static final String CLI_WRITES = "writes";
     private static final String CLI_HELP = "help";
 
     public static void main(String[] args) throws ParseException {
-        Options options = new Options();
-        options.addOption(CLI_CONFIG.substring(0,1), CLI_CONFIG, true, "config file name");
-        options.addOption(CLI_DATABASE.substring(0,1), CLI_DATABASE, true, "database name. Supported databases: cassandra.");
-        options.addOption(CLI_HELP.substring(0,1), CLI_HELP, false, "Show this is help");
+
+        Options options = getOptions();
         CommandLine commandLine = new GnuParser().parse(options, args);
 
-        if (!commandLine.hasOption(CLI_CONFIG) || !commandLine.hasOption(CLI_DATABASE) || commandLine.hasOption("h")) {
-            new HelpFormatter().printHelp("nosql-research -c <config file name> -d <database> [-h]", options);
-        }
+        if (!isCommandLineValid(commandLine, options)) return;
 
+        int threadsCount = Integer.valueOf(commandLine.getOptionValue(CLI_THREADS));
+        long writesCount = Long.valueOf(commandLine.getOptionValue(CLI_WRITES));
+
+        ExecutorService threadPool = Executors.newFixedThreadPool(threadsCount);
         Configurator config = new Configurator(commandLine.getOptionValue(CLI_CONFIG));
         Database db;
         try {
             db = DatabasePool.get(commandLine.getOptionValue(CLI_DATABASE));
+            db.init(config);
         } catch (Exception e) {
             e.printStackTrace();
             log.error(e.getMessage());
             throw new RuntimeException(e);
         }
+
+        for (int i=0; i<threadsCount; i++) {
+            try {
+                threadPool.submit(ScenarioPool.get(commandLine.getOptionValue(CLI_SCENARIO)).init(db, writesCount));
+            } catch (Exception e) {
+                threadPool.shutdown();
+                e.printStackTrace();
+                log.error(e.getMessage());
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private static Options getOptions() {
+        return  new Options()
+                .addOption(CLI_CONFIG.substring(0, 1), CLI_CONFIG, true, "Config file name")
+                .addOption(CLI_DATABASE.substring(0, 1), CLI_DATABASE, true, "Database name. Supported databases: cassandra.")
+                .addOption(CLI_SCENARIO.substring(0, 1), CLI_SCENARIO, true, "Scenario name. Supported scenarios: consistency.")
+                .addOption(CLI_THREADS.substring(0, 1), CLI_THREADS, true, "Clients threads count")
+                .addOption(CLI_WRITES.substring(0, 1), CLI_WRITES, true, "Clients threads count")
+                .addOption(CLI_HELP.substring(0, 1), CLI_HELP, false, "Show this is help");
+    }
+
+    private static boolean isCommandLineValid(CommandLine commandLine, Options options) {
+        if (commandLine.hasOption(CLI_HELP)
+                || !commandLine.hasOption(CLI_CONFIG)
+                || !commandLine.hasOption(CLI_DATABASE)
+                || !commandLine.hasOption(CLI_SCENARIO)
+                || !commandLine.hasOption(CLI_THREADS)
+                || !commandLine.hasOption(CLI_WRITES)) {
+            new HelpFormatter().printHelp("nosql-research -c <config file name> -d <database> -s <scenario name> " +
+                    "-t <threads count> -w <writes count> [-h]", options);
+            return false;
+        }
+        return true;
     }
 }

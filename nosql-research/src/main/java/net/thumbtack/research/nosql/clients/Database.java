@@ -1,4 +1,6 @@
-package net.thumbtack.research.nosql;
+package net.thumbtack.research.nosql.clients;
+
+import net.thumbtack.research.nosql.Configurator;
 
 /**
  * User: vkornev

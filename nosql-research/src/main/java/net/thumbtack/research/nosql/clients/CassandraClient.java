@@ -1,5 +1,6 @@
-package net.thumbtack.research.nosql;
+package net.thumbtack.research.nosql.clients;
 
+import net.thumbtack.research.nosql.Configurator;
 import org.apache.cassandra.thrift.*;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;

@@ -1,4 +1,4 @@
-package net.thumbtack.research.nosql;
+package net.thumbtack.research.nosql.clients;
 
 import java.util.HashMap;
 import java.util.Map;
