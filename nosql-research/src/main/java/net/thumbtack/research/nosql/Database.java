@@ -9,6 +9,6 @@ package net.thumbtack.research.nosql;
  */
 public interface Database<T> {
     void init(Configurator configurator);
-    void Write(String key, T value);
+    void write(String key, T value);
     T read(String key);
 }
