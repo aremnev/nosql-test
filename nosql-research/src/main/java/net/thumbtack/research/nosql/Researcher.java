@@ -89,12 +89,10 @@ public class Researcher {
 
 	    log.info("Tests complete");
 
-        long successful = ResearcherReport.successes.getCounter();
-        long failed = ResearcherReport.failures.getCounter();
-
 	    log.warn("---------------------------------------------------------------------");
-        log.warn("Total writes: " + successful + failed);
-        log.warn("Failed writes: " + failed);
+        log.warn("Total writes: " + ResearcherReport.actions.getCounter());
+	    log.warn("Total failures: " + ResearcherReport.failures.getCounter());
+        log.warn("Incomplete writes: " + ResearcherReport.valueFailures.getCounter());
 	    log.warn("Action timings: total={}ms, min={}ms, mean={}ms, max={}ms",
 			    new Object [] {
 					    new Long(ResearcherReport.actions.getTotal() / 1000000),

@@ -10,15 +10,15 @@ import org.javasimon.Stopwatch;
 public class ResearcherReport {
 
 	public static final Stopwatch actions = SimonManager.getStopwatch("action");
-	public static final Stopwatch successes = SimonManager.getStopwatch("success");
 	public static final Stopwatch failures = SimonManager.getStopwatch("failure");
-
-	public static void addSuccess() {
-		successes.addSplit(new Split().stop());
-	}
+	public static final Stopwatch valueFailures = SimonManager.getStopwatch("value_failure");
 
 	public static void addFailure() {
 		failures.addSplit(new Split().stop());
+	}
+
+	public static void addValueFailure() {
+		valueFailures.addSplit(new Split().stop());
 	}
 
 }

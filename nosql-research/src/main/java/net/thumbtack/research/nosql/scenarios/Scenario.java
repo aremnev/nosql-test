@@ -49,7 +49,7 @@ public abstract class Scenario implements Runnable {
 	                action();
 	                split.stop();
                 } catch (Exception e) {
-                    e.printStackTrace();
+	                ResearcherReport.addFailure();
                     log.error(e.getMessage());
                 }
             }

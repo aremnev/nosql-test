@@ -35,12 +35,10 @@ public class ConsistencyScenario extends Scenario {
         String readValue = ss.fromByteBuffer(db.read(key));
 
         if (!writtenValue.equals(readValue)) {
+	        ResearcherReport.addValueFailure();
 	        ResearcherReport.addFailure();
             log.warn("Written and read values for key {} are different. Written: {}, Read: {} ",
 		            new Object [] { key, writtenValue, readValue } );
-        }
-        else {
-	        ResearcherReport.addSuccess();
         }
     }
 
