@@ -7,6 +7,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +44,6 @@ public class CassandraClient implements Database {
     private Cassandra.Client client;
     private TTransport transport;
 
-
     CassandraClient() {
 
     }
@@ -57,7 +57,7 @@ public class CassandraClient implements Database {
             );
             client = new Cassandra.Client(new TBinaryProtocol(transport));
             transport.open();
-            
+
             client.set_keyspace(configurator.getString(KEY_SPACE_PROPERTY, DEFAULT_KEY_SPACE));
             readConsistencyLevel = getConsistencyLevel(
                     configurator,
@@ -71,6 +71,8 @@ public class CassandraClient implements Database {
             );
             columnFamily = configurator.getString(COLUMN_FAMILY_PROPERTY, DEFAULT_COLUMN_FAMILY);
             columnName = configurator.getString(COLUMN_NAME_PROPERTY, DEFAULT_COLUMN_NAME);
+
+            client.truncate(columnFamily);
         } catch (TException e) {
             e.printStackTrace();
             log.error(e.getMessage());
@@ -84,30 +86,40 @@ public class CassandraClient implements Database {
         Map<String, List<Mutation>> mutationMap = new HashMap<String, List<Mutation>>(1);
         Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<ByteBuffer, Map<String, List<Mutation>>>(1);
 
+        ByteBuffer wrappedKey;
+
+        Column col;
+        ColumnOrSuperColumn superColumn;
+        col = new Column();
         try {
-            ByteBuffer wrappedKey = ByteBuffer.wrap(key.getBytes("UTF-8"));
-
-            Column col;
-            ColumnOrSuperColumn superColumn;
-                col = new Column();
-                col.setName(ByteBuffer.wrap(columnName.getBytes("UTF-8")));
-                col.setValue(ByteBuffer.wrap(columnName.getBytes("UTF-8")));
-                col.setTimestamp(System.currentTimeMillis());
-                superColumn = new ColumnOrSuperColumn();
-                superColumn.setColumn(col);
-                mutations.add(new Mutation().setColumn_or_supercolumn(superColumn));
-
-            mutationMap.put(columnFamily, mutations);
-            record.put(wrappedKey, mutationMap);
-
-            client.batch_mutate(record, writeConsistencyLevel);
+            wrappedKey = ByteBuffer.wrap(key.getBytes("UTF-8"));
+            col.setName(ByteBuffer.wrap(columnName.getBytes("UTF-8")));
+            col.setValue(ByteBuffer.wrap(columnName.getBytes("UTF-8")));
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
             log.error(e.getMessage());
+            throw new RuntimeException(e);
         }
-        catch (TException e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
+        col.setTimestamp(System.currentTimeMillis());
+        superColumn = new ColumnOrSuperColumn();
+        superColumn.setColumn(col);
+        mutations.add(new Mutation().setColumn_or_supercolumn(superColumn));
+
+        mutationMap.put(columnFamily, mutations);
+        record.put(wrappedKey, mutationMap);
+        for (int i=0; i<10; i++) {
+            try {
+                client.batch_mutate(record, writeConsistencyLevel);
+            } catch (TTransportException e) {
+                e.printStackTrace();
+                log.error(e.getMessage() + " TTransportException.Type: " + e.getType());
+                continue;
+            } catch (TException e) {
+                e.printStackTrace();
+                log.error(e.getMessage());
+                continue;
+            }
+            return;
         }
     }
 
@@ -120,13 +132,13 @@ public class CassandraClient implements Database {
         try {
             ByteBuffer cn = ByteBuffer.wrap(columnName.getBytes("UTF-8"));
             predicate = new SlicePredicate().setSlice_range(
-                new SliceRange(cn, cn, false, 1)
+                    new SliceRange(cn, cn, false, 1)
             );
             List<ColumnOrSuperColumn> results = client.get_slice(
-                ByteBuffer.wrap(key.getBytes("UTF-8")),
-                parent,
-                predicate,
-                readConsistencyLevel
+                    ByteBuffer.wrap(key.getBytes("UTF-8")),
+                    parent,
+                    predicate,
+                    readConsistencyLevel
             );
             for (ColumnOrSuperColumn column : results) {
                 result = column.column.value;
@@ -145,7 +157,7 @@ public class CassandraClient implements Database {
 
     private ConsistencyLevel getConsistencyLevel(Configurator configurator, String name, ConsistencyLevel def) {
         String levelName = configurator.getString(name, null);
-        if(levelName != null && ConsistencyLevel.valueOf(levelName) != null) {
+        if (levelName != null && ConsistencyLevel.valueOf(levelName) != null) {
             return ConsistencyLevel.valueOf(levelName);
         }
         return def;

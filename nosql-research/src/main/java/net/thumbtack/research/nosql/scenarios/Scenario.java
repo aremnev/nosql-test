@@ -1,6 +1,10 @@
 package net.thumbtack.research.nosql.scenarios;
 
 import net.thumbtack.research.nosql.clients.Database;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.UnsupportedEncodingException;
 
 /**
  * User: vkornev
@@ -10,6 +14,7 @@ import net.thumbtack.research.nosql.clients.Database;
  * Base NoSQL database test scenario interface
  */
 public abstract class Scenario implements Runnable {
+    private static final Logger log = LoggerFactory.getLogger(Scenario.class);
     protected Database db;
     protected long writesCount;
 
@@ -22,9 +27,14 @@ public abstract class Scenario implements Runnable {
     @Override
     public void run() {
         for (long i=0; i < writesCount; i++) {
-            action();
+            try {
+                action();
+            } catch (Exception e) {
+                e.printStackTrace();
+                log.error(e.getMessage());
+            }
         }
     }
 
-    protected abstract void action();
+    protected abstract void action() throws Exception;
 }
