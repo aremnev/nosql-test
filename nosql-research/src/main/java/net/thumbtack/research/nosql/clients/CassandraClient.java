@@ -29,7 +29,12 @@ public class CassandraClient implements Database {
     private static final String DEFAULT_COLUMN_NAME = "column_name";
 
     private static final String READ_CONSISTENCY_LEVEL_PROPERTY = "readConsistencyLevel";
+    private static final String DEFAULT_READ_CONSISTENCY_LEVEL = "ONE";
     private static final String WRITE_CONSISTENCY_LEVEL_PROPERTY = "writeConsistencyLevel";
+    private static final String DEFAULT_WRITE_CONSISTENCY_LEVEL = "ONE";
+
+    private static final String REPLICATION_FACTOR_PROPERTY = "replicationFactor";
+    private static final int DEFAULT_REPLICATION_FACTOR = 1;
 
     private static final Logger log = LoggerFactory.getLogger(CassandraClient.class);
 
