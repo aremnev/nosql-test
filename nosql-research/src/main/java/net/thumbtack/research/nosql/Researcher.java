@@ -105,7 +105,7 @@ public class Researcher {
                 .addOption(CLI_DATABASE.substring(0, 1), CLI_DATABASE, true, "Database name. Supported databases: " + Arrays.toString(DatabasePool.DATABASES))
                 .addOption(CLI_SCENARIO.substring(0, 1), CLI_SCENARIO, true, "Scenario name. Supported scenarios: " + Arrays.toString(ScenarioPool.SCENARIOS))
                 .addOption(CLI_THREADS.substring(0, 1), CLI_THREADS, true, "Clients threads count")
-                .addOption(CLI_WRITES.substring(0, 1), CLI_WRITES, true, "Clients threads count")
+                .addOption(CLI_WRITES.substring(0, 1), CLI_WRITES, true, "Writes count")
                 .addOption(CLI_HELP.substring(0, 1), CLI_HELP, false, "Show this is help");
     }
 
