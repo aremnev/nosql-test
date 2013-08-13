@@ -24,6 +24,21 @@ public class ConsistencyScenario extends Scenario {
         db.write(key, value);
         if (!value.equals(db.read(key))) {
             log.warn("Wrote and read values is different. Key: " + key);
+            fw++;
+        }
+        else {
+            sw++;
+        }
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        try {
+            db.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
         }
     }
 }

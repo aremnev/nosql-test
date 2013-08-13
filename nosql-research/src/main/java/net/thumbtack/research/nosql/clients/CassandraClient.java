@@ -1,6 +1,7 @@
 package net.thumbtack.research.nosql.clients;
 
 import net.thumbtack.research.nosql.Configurator;
+import org.apache.cassandra.locator.NetworkTopologyStrategy;
 import org.apache.cassandra.thrift.*;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -29,12 +30,10 @@ public class CassandraClient implements Database {
     private static final String DEFAULT_COLUMN_NAME = "column_name";
 
     private static final String READ_CONSISTENCY_LEVEL_PROPERTY = "readConsistencyLevel";
-    private static final String DEFAULT_READ_CONSISTENCY_LEVEL = "ONE";
     private static final String WRITE_CONSISTENCY_LEVEL_PROPERTY = "writeConsistencyLevel";
-    private static final String DEFAULT_WRITE_CONSISTENCY_LEVEL = "ONE";
 
     private static final String REPLICATION_FACTOR_PROPERTY = "replicationFactor";
-    private static final int DEFAULT_REPLICATION_FACTOR = 1;
+    private static final String DEFAULT_REPLICATION_FACTOR = "1";
 
     private static final Logger log = LoggerFactory.getLogger(CassandraClient.class);
 
@@ -75,7 +74,21 @@ public class CassandraClient implements Database {
             client = new Cassandra.Client(new TBinaryProtocol(transport));
             transport.open();
 
-            client.set_keyspace(configurator.getString(KEY_SPACE_PROPERTY, DEFAULT_KEY_SPACE));
+            String keyspace = configurator.getString(KEY_SPACE_PROPERTY, DEFAULT_KEY_SPACE);
+            String replicationFactor = configurator.getString(REPLICATION_FACTOR_PROPERTY, DEFAULT_REPLICATION_FACTOR);
+
+            KsDef ksDef = client.describe_keyspace(keyspace);
+            if (ksDef == null) {
+                List<CfDef> cfDefList = new ArrayList<>();
+                CfDef cfDef = new CfDef(keyspace, columnFamily);
+                cfDefList.add(cfDef);
+                ksDef = new KsDef(keyspace, NetworkTopologyStrategy.class.getName(), cfDefList);
+                client.system_add_keyspace(ksDef);
+            }
+            ksDef.strategy_options.put("replication_factor", replicationFactor);
+            client.system_update_keyspace(ksDef);
+            client.set_keyspace(keyspace);
+
             readConsistencyLevel = getConsistencyLevel(
                     configurator,
                     READ_CONSISTENCY_LEVEL_PROPERTY,
@@ -100,7 +113,7 @@ public class CassandraClient implements Database {
     @Override
     public void write(String key, ByteBuffer value) {
 
-        Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<ByteBuffer, Map<String, List<Mutation>>>(1);
+        Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<>(1);
 
         ByteBuffer wrappedKey;
 

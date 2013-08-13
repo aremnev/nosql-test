@@ -8,6 +8,10 @@ import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 
 /**
@@ -42,13 +46,15 @@ public class Researcher {
 
         Configurator config = new Configurator(commandLine.getOptionValue(CLI_CONFIG));
         ThreadPoolExecutor threadPool = new ThreadPoolExecutor(threadsCount, threadsCount, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
+        List<Long> successfulWrites = new ArrayList<>();
+        List<Long> failedWrites = new ArrayList<>();
 
         for (int i=0; i<threadsCount; i++) {
             try {
                 Database db = DatabasePool.get(commandLine.getOptionValue(CLI_DATABASE));
                 db.init(config);
                 Scenario sc = ScenarioPool.get(commandLine.getOptionValue(CLI_SCENARIO));
-                sc.init(db, writesCount/threadsCount);
+                sc.init(db, writesCount / threadsCount, successfulWrites, failedWrites);
                 threadPool.submit(sc);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -61,6 +67,18 @@ public class Researcher {
         while (threadPool.getActiveCount() > 0) {}
 
         threadPool.shutdown();
+
+        long successful = 0;
+        for (Long s: successfulWrites) {
+            successful += s;
+        }
+        long failed = 0;
+        for (Long f: failedWrites) {
+            failed += f;
+        }
+
+        log.warn("Total writes: " + (successful + failed));
+        log.warn("Failed writes: " + failed);
     }
 
     private static Options getOptions() {
