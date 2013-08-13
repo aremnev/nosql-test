@@ -5,13 +5,11 @@ import net.thumbtack.research.nosql.clients.DatabasePool;
 import net.thumbtack.research.nosql.scenarios.Scenario;
 import net.thumbtack.research.nosql.scenarios.ScenarioPool;
 import org.apache.commons.cli.*;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -104,8 +102,8 @@ public class Researcher {
     private static Options getOptions() {
         return  new Options()
                 .addOption(CLI_CONFIG.substring(0, 1), CLI_CONFIG, true, "Config file name")
-                .addOption(CLI_DATABASE.substring(0, 1), CLI_DATABASE, true, "Database name. Supported databases: " + DatabasePool.DATABASES)
-                .addOption(CLI_SCENARIO.substring(0, 1), CLI_SCENARIO, true, "Scenario name. Supported scenarios: " + ScenarioPool.SCENARIOS)
+                .addOption(CLI_DATABASE.substring(0, 1), CLI_DATABASE, true, "Database name. Supported databases: " + Arrays.toString(DatabasePool.DATABASES))
+                .addOption(CLI_SCENARIO.substring(0, 1), CLI_SCENARIO, true, "Scenario name. Supported scenarios: " + Arrays.toString(ScenarioPool.SCENARIOS))
                 .addOption(CLI_THREADS.substring(0, 1), CLI_THREADS, true, "Clients threads count")
                 .addOption(CLI_WRITES.substring(0, 1), CLI_WRITES, true, "Clients threads count")
                 .addOption(CLI_HELP.substring(0, 1), CLI_HELP, false, "Show this is help");
