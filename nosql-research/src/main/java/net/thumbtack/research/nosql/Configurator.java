@@ -17,6 +17,9 @@ public class Configurator {
     private static final Logger log = LoggerFactory.getLogger(Configurator.class);
     private final ConcurrentMapConfiguration config;
 
+    private final static String HOST_PROPERTY = "host";
+    private final static String PORT_PROPERTY = "port";
+
     public Configurator(String fileName) {
         try {
             config = new ConcurrentMapConfiguration(new PropertiesConfiguration(fileName));
@@ -33,5 +36,13 @@ public class Configurator {
 
     public int getInt(String key, int def) {
         return config.getInt(key, def);
+    }
+
+    public String getHost(String def) {
+        return getString(HOST_PROPERTY, def);
+    }
+
+    public int getPort(int def) {
+        return getInt(PORT_PROPERTY, def);
     }
 }
