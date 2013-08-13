@@ -13,6 +13,7 @@ import java.nio.ByteBuffer;
  */
 public interface Database {
     void init(Configurator configurator);
-    void Write(String key, ByteBuffer value);
+    void write(String key, ByteBuffer value);
     ByteBuffer read(String key);
+    void close() throws Exception;
 }

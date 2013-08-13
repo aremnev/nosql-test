@@ -9,18 +9,19 @@ import java.util.Map;
  * Time: 10:46
  */
 public class ScenarioPool {
-    private static final Map<String, Class<? extends Scenario>> databasePool = new HashMap<String, Class<? extends Scenario>>();
     private static final String SC_CONSISTENCY = "consistency";
     private static final String[] scenarios = {SC_CONSISTENCY};
-
     private static final ScenarioPool instance = new ScenarioPool();
+
+    private final Map<String, Class<? extends Scenario>> databasePool;
 
     @SuppressWarnings("unchecked")
     private ScenarioPool() {
+        databasePool = new HashMap<String, Class<? extends Scenario>>();
         databasePool.put(SC_CONSISTENCY, ConsistencyScenario.class);
     }
 
     public static Scenario get(String scenarioName) throws IllegalAccessException, InstantiationException {
-        return databasePool.get(scenarioName).newInstance();
+        return instance.databasePool.get(scenarioName).newInstance();
     }
 }

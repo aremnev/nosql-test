@@ -21,9 +21,11 @@ public class CassandraClient implements Database {
     private static final String DEFAULT_HOST = "localhost";
     private static final int DEFAULT_PORT = 9160;
     private static final String KEY_SPACE_PROPERTY = "keySpace";
-    private static final String COLUMN_FAMILY_PROPERTY = "columnFamily";
     private static final String DEFAULT_KEY_SPACE = "key_space";
+    private static final String COLUMN_FAMILY_PROPERTY = "columnFamily";
     private static final String DEFAULT_COLUMN_FAMILY = "column_family";
+    private static final String COLUMN_NAME_PROPERTY = "columnName";
+    private static final String DEFAULT_COLUMN_NAME = "column_name";
 
     private static final String READ_CONSISTENCY_LEVEL_PROPERTY = "readConsistencyLevel";
     private static final String WRITE_CONSISTENCY_LEVEL_PROPERTY = "writeConsistencyLevel";
@@ -36,6 +38,7 @@ public class CassandraClient implements Database {
 
     //TODO: Figure out what is this
     private String columnFamily;
+    private String columnName;
 
     private Cassandra.Client client;
     private TTransport transport;
@@ -67,6 +70,7 @@ public class CassandraClient implements Database {
                     ConsistencyLevel.ONE
             );
             columnFamily = configurator.getString(COLUMN_FAMILY_PROPERTY, DEFAULT_COLUMN_FAMILY);
+            columnName = configurator.getString(COLUMN_NAME_PROPERTY, DEFAULT_COLUMN_NAME);
         } catch (TException e) {
             e.printStackTrace();
             log.error(e.getMessage());
@@ -76,7 +80,7 @@ public class CassandraClient implements Database {
 
     @Override
     public void write(String key, ByteBuffer value) {
-        List<Mutation> mutations = new ArrayList<Mutation>(value.size());
+        List<Mutation> mutations = new ArrayList<Mutation>(1);
         Map<String, List<Mutation>> mutationMap = new HashMap<String, List<Mutation>>(1);
         Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<ByteBuffer, Map<String, List<Mutation>>>(1);
 
@@ -85,15 +89,13 @@ public class CassandraClient implements Database {
 
             Column col;
             ColumnOrSuperColumn superColumn;
-            for (Map.Entry<String, String> entry : value.entrySet()) {
                 col = new Column();
-                col.setName(ByteBuffer.wrap(entry.getKey().getBytes("UTF-8")));
-                col.setValue(ByteBuffer.wrap(entry.getValue().getBytes("UTF-8")));
+                col.setName(ByteBuffer.wrap(columnName.getBytes("UTF-8")));
+                col.setValue(ByteBuffer.wrap(columnName.getBytes("UTF-8")));
                 col.setTimestamp(System.currentTimeMillis());
                 superColumn = new ColumnOrSuperColumn();
                 superColumn.setColumn(col);
                 mutations.add(new Mutation().setColumn_or_supercolumn(superColumn));
-            }
 
             mutationMap.put(columnFamily, mutations);
             record.put(wrappedKey, mutationMap);
@@ -110,15 +112,16 @@ public class CassandraClient implements Database {
     }
 
     @Override
-    public Map<String, String> read(String key) {
+    public ByteBuffer read(String key) {
         SlicePredicate predicate;
-        Map<String, String> result = new HashMap<String, String>();
+        ByteBuffer result = null;
         ColumnParent parent = new ColumnParent(columnFamily);
 
-        predicate = new SlicePredicate().setSlice_range(
-            new SliceRange(emptyByteBuffer, emptyByteBuffer, false, 1000000)
-        );
         try {
+            ByteBuffer cn = ByteBuffer.wrap(columnName.getBytes("UTF-8"));
+            predicate = new SlicePredicate().setSlice_range(
+                new SliceRange(cn, cn, false, 1)
+            );
             List<ColumnOrSuperColumn> results = client.get_slice(
                 ByteBuffer.wrap(key.getBytes("UTF-8")),
                 parent,
@@ -126,20 +129,8 @@ public class CassandraClient implements Database {
                 readConsistencyLevel
             );
             for (ColumnOrSuperColumn column : results) {
-                ByteBuffer nameBuffer = column.column.name;
-                ByteBuffer valueBuffer = column.column.value;
-                result.put(
-                    new String(
-                        nameBuffer.array(),
-                        nameBuffer.position() + nameBuffer.arrayOffset(),
-                        nameBuffer.remaining()
-                    ),
-                    new String(
-                        valueBuffer.array(),
-                        valueBuffer.position() + valueBuffer.arrayOffset(),
-                        valueBuffer.remaining()
-                    )
-                );
+                result = column.column.value;
+
             }
             return result;
         } catch (TException e) {
@@ -150,20 +141,6 @@ public class CassandraClient implements Database {
             log.error(e.getMessage());
         }
         return null;
-    }
-
-    private void authenticate(Configurator configurator) throws TException {
-        String username = configurator.getString(USERNAME_PROPERTY, null);
-        if(username != null) {
-            Map<String, String> cred = new HashMap<String, String>(2);
-            cred.put(USERNAME_PROPERTY, username);
-            String password = configurator.getString(PASSWORD_PROPERTY, null);
-            if(password != null) {
-                cred.put(PASSWORD_PROPERTY, password);
-            }
-            AuthenticationRequest req = new AuthenticationRequest(cred);
-            client.login(req);
-        }
     }
 
     private ConsistencyLevel getConsistencyLevel(Configurator configurator, String name, ConsistencyLevel def) {
