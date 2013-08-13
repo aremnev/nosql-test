@@ -2,13 +2,13 @@ package net.thumbtack.research.nosql;
 
 import net.thumbtack.research.nosql.clients.Database;
 import net.thumbtack.research.nosql.clients.DatabasePool;
+import net.thumbtack.research.nosql.scenarios.Scenario;
 import net.thumbtack.research.nosql.scenarios.ScenarioPool;
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 /**
  * User: vkornev
@@ -40,35 +40,34 @@ public class Researcher {
         int threadsCount = Integer.valueOf(commandLine.getOptionValue(CLI_THREADS));
         long writesCount = Long.valueOf(commandLine.getOptionValue(CLI_WRITES));
 
-        ExecutorService threadPool = Executors.newFixedThreadPool(threadsCount);
         Configurator config = new Configurator(commandLine.getOptionValue(CLI_CONFIG));
-        Database db;
-        try {
-            db = DatabasePool.get(commandLine.getOptionValue(CLI_DATABASE));
-            db.init(config);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            throw new RuntimeException(e);
-        }
+        ThreadPoolExecutor threadPool = new ThreadPoolExecutor(threadsCount, threadsCount, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
 
         for (int i=0; i<threadsCount; i++) {
             try {
-                threadPool.submit(ScenarioPool.get(commandLine.getOptionValue(CLI_SCENARIO)).init(db, writesCount));
+                Database db = DatabasePool.get(commandLine.getOptionValue(CLI_DATABASE));
+                db.init(config);
+                Scenario sc = ScenarioPool.get(commandLine.getOptionValue(CLI_SCENARIO));
+                sc.init(db, writesCount/threadsCount);
+                threadPool.submit(sc);
             } catch (Exception e) {
-                threadPool.shutdown();
                 e.printStackTrace();
                 log.error(e.getMessage());
                 throw new RuntimeException(e);
             }
         }
+
+
+        while (threadPool.getActiveCount() > 0) {}
+
+        threadPool.shutdown();
     }
 
     private static Options getOptions() {
         return  new Options()
                 .addOption(CLI_CONFIG.substring(0, 1), CLI_CONFIG, true, "Config file name")
-                .addOption(CLI_DATABASE.substring(0, 1), CLI_DATABASE, true, "Database name. Supported databases: cassandra.")
-                .addOption(CLI_SCENARIO.substring(0, 1), CLI_SCENARIO, true, "Scenario name. Supported scenarios: consistency.")
+                .addOption(CLI_DATABASE.substring(0, 1), CLI_DATABASE, true, "Database name. Supported databases: " + DatabasePool.DATABASES)
+                .addOption(CLI_SCENARIO.substring(0, 1), CLI_SCENARIO, true, "Scenario name. Supported scenarios: " + ScenarioPool.SCENARIOS)
                 .addOption(CLI_THREADS.substring(0, 1), CLI_THREADS, true, "Clients threads count")
                 .addOption(CLI_WRITES.substring(0, 1), CLI_WRITES, true, "Clients threads count")
                 .addOption(CLI_HELP.substring(0, 1), CLI_HELP, false, "Show this is help");

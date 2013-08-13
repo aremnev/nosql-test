@@ -18,10 +18,9 @@ public abstract class Scenario implements Runnable {
     protected Database db;
     protected long writesCount;
 
-    public Scenario init(Database database, long writesCount) {
+    public void init(Database database, long writesCount) {
         db = database;
         this.writesCount = writesCount;
-        return this;
     }
 
     @Override

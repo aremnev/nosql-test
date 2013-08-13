@@ -9,8 +9,8 @@ import java.util.Map;
  * Time: 19:23
  */
 public class DatabasePool {
-    private static final String DB_CASSANDRA = "cassandra";
-    private static final String[] databases = {DB_CASSANDRA};
+    public static final String DB_CASSANDRA = "cassandra";
+    public static final String[] DATABASES = {DB_CASSANDRA};
 
     private static final DatabasePool instance = new DatabasePool();
     private final Map<String, Class<? extends Database>> databasePool;
