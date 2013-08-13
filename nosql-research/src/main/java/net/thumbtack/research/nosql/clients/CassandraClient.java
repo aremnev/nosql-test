@@ -1,6 +1,7 @@
 package net.thumbtack.research.nosql.clients;
 
 import net.thumbtack.research.nosql.Configurator;
+import net.thumbtack.research.nosql.utils.StringSerializer;
 import org.apache.cassandra.locator.SimpleStrategy;
 import org.apache.cassandra.thrift.*;
 import org.apache.thrift.TException;
@@ -36,6 +37,8 @@ public class CassandraClient implements Database {
     private static final String DEFAULT_REPLICATION_FACTOR = "1";
 
     private static final Logger log = LoggerFactory.getLogger(CassandraClient.class);
+
+    private static final StringSerializer ss = StringSerializer.get();
 
     private ConsistencyLevel readConsistencyLevel;
     private ConsistencyLevel writeConsistencyLevel;
@@ -129,15 +132,9 @@ public class CassandraClient implements Database {
 
         ColumnOrSuperColumn superColumn = getSuperColumn();
         Column col = superColumn.column;
-        try {
-            wrappedKey = ByteBuffer.wrap(key.getBytes("UTF-8"));
-            col.setName(ByteBuffer.wrap(columnName.getBytes("UTF-8")));
-            col.setValue(value);
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            throw new RuntimeException(e);
-        }
+        wrappedKey = ss.toByteBuffer(key);
+        col.setName(ss.toByteBuffer(columnName));
+        col.setValue(value);
         col.setTimestamp(System.currentTimeMillis());
 
         record.put(wrappedKey, mutationMap);
@@ -154,7 +151,7 @@ public class CassandraClient implements Database {
                 continue;
             }
             if(log.isDebugEnabled()) {
-                log.debug("Written key:" + key + " value: " + value);
+                log.debug("Written key:" + ss.fromByteBuffer(wrappedKey) + " value: " + ss.fromByteBuffer(value));
             }
             return;
         }
@@ -164,16 +161,13 @@ public class CassandraClient implements Database {
     public ByteBuffer read(String key) {
         ColumnPath parent = new ColumnPath(columnFamily);
         try {
-            parent.column = ByteBuffer.wrap(columnName.getBytes("UTF-8"));
+            parent.column = ss.toByteBuffer(columnName);
             return client.get(
-                    ByteBuffer.wrap(key.getBytes("UTF-8")),
+                    ss.toByteBuffer(key),
                     parent,
                     readConsistencyLevel
             ).column.value;
         } catch (TException e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-        } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
             log.error(e.getMessage());
         }

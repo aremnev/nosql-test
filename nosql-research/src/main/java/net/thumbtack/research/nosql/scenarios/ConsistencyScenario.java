@@ -1,6 +1,7 @@
 package net.thumbtack.research.nosql.scenarios;
 
 import net.thumbtack.research.nosql.clients.Database;
+import net.thumbtack.research.nosql.utils.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
  */
 public class ConsistencyScenario extends Scenario {
     private static final Logger log = LoggerFactory.getLogger(ConsistencyScenario.class);
+    private static final StringSerializer ss = StringSerializer.get();
     private String key;
 
     @Override
@@ -27,14 +29,14 @@ public class ConsistencyScenario extends Scenario {
 
     @Override
     protected void action() throws Exception {
-        ByteBuffer value = ByteBuffer.wrap(UUID.randomUUID().toString().getBytes("UTF-8"));
-        db.write(key, value);
-        ByteBuffer newValue = db.read(key);
-        if (!value.equals(newValue)) {
+        String writtenValue = UUID.randomUUID().toString();
+        db.write(key, ss.toByteBuffer(writtenValue));
+        String readValue = ss.fromByteBuffer(db.read(key));
+        if (!writtenValue.equals(readValue)) {
             log.warn("Written and read values are different. " +
                     "Key: " + key +
-                    " New data: " + new String(newValue.array(), "UTF-8") +
-                    "; Old data: " + new String(value.array(), "UTF-8"));
+                    " Written data: " + writtenValue +
+                    "; Read data: " + readValue);
             fw++;
         }
         else {
