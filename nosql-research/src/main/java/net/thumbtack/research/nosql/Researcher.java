@@ -13,6 +13,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * User: vkornev
@@ -49,12 +54,27 @@ public class Researcher {
         List<Long> successfulWrites = new ArrayList<>();
         List<Long> failedWrites = new ArrayList<>();
 
-        for (int i=0; i<threadsCount; i++) {
+        List<Database> dbs = new ArrayList<Database>(threadsCount);
+        Database db;
+
+        for (int i=0; i < threadsCount; i++) {
             try {
-                Database db = DatabasePool.get(commandLine.getOptionValue(CLI_DATABASE));
+                db = DatabasePool.get(commandLine.getOptionValue(CLI_DATABASE));
                 db.init(config);
+                dbs.add(db);
+            } catch (Exception e) {
+                e.printStackTrace();
+                log.error(e.getMessage());
+                throw new RuntimeException(e);
+            }
+        }
+
+        log.info("Start scenarios");
+
+        for (Database initDB : dbs) {
+            try {
                 Scenario sc = ScenarioPool.get(commandLine.getOptionValue(CLI_SCENARIO));
-                sc.init(db, writesCount / threadsCount, successfulWrites, failedWrites);
+                sc.init(initDB, writesCount / threadsCount, successfulWrites, failedWrites);
                 threadPool.submit(sc);
             } catch (Exception e) {
                 e.printStackTrace();

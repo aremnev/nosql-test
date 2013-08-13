@@ -1,7 +1,6 @@
 package net.thumbtack.research.nosql.clients;
 
 import net.thumbtack.research.nosql.Configurator;
-import org.apache.cassandra.locator.NetworkTopologyStrategy;
 import org.apache.cassandra.locator.SimpleStrategy;
 import org.apache.cassandra.thrift.*;
 import org.apache.thrift.TException;
@@ -110,6 +109,8 @@ public class CassandraClient implements Database {
                     WRITE_CONSISTENCY_LEVEL_PROPERTY,
                     ConsistencyLevel.ONE
             );
+            columnFamily = configurator.getString(COLUMN_FAMILY_PROPERTY, DEFAULT_COLUMN_FAMILY);
+            columnName = configurator.getString(COLUMN_NAME_PROPERTY, DEFAULT_COLUMN_NAME);
 
             client.truncate(columnFamily);
         } catch (TException e) {
