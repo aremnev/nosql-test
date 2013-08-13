@@ -32,7 +32,6 @@ public class CassandraClient implements Database {
     private static final String WRITE_CONSISTENCY_LEVEL_PROPERTY = "writeConsistencyLevel";
 
     private static final Logger log = LoggerFactory.getLogger(CassandraClient.class);
-    public static final ByteBuffer emptyByteBuffer = ByteBuffer.wrap(new byte[0]);
 
     private ConsistencyLevel readConsistencyLevel;
     private ConsistencyLevel writeConsistencyLevel;
@@ -82,9 +81,9 @@ public class CassandraClient implements Database {
 
     @Override
     public void write(String key, ByteBuffer value) {
-        List<Mutation> mutations = new ArrayList<Mutation>(1);
-        Map<String, List<Mutation>> mutationMap = new HashMap<String, List<Mutation>>(1);
-        Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<ByteBuffer, Map<String, List<Mutation>>>(1);
+        List<Mutation> mutations = new ArrayList<>(1);
+        Map<String, List<Mutation>> mutationMap = new HashMap<>(1);
+        Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<>(1);
 
         ByteBuffer wrappedKey;
 
@@ -94,7 +93,7 @@ public class CassandraClient implements Database {
         try {
             wrappedKey = ByteBuffer.wrap(key.getBytes("UTF-8"));
             col.setName(ByteBuffer.wrap(columnName.getBytes("UTF-8")));
-            col.setValue(ByteBuffer.wrap(columnName.getBytes("UTF-8")));
+            col.setValue(value);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
             log.error(e.getMessage());
