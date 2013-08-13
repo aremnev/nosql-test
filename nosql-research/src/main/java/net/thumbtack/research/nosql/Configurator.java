@@ -45,4 +45,9 @@ public class Configurator {
     public int getPort(int def) {
         return getInt(PORT_PROPERTY, def);
     }
+
+    @Override
+    public String toString() {
+        return config.getProperties().toString();
+    }
 }

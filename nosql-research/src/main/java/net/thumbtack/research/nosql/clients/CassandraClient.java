@@ -41,20 +41,33 @@ public class CassandraClient implements Database {
     private ConsistencyLevel readConsistencyLevel;
     private ConsistencyLevel writeConsistencyLevel;
 
-    //TODO: Figure out what is this
     private String columnFamily;
     private String columnName;
 
     private Cassandra.Client client;
     private TTransport transport;
 
-    CassandraClient() {
+    private final Map<String, List<Mutation>> mutationMap = new HashMap<String, List<Mutation>>(1);
+    private ColumnOrSuperColumn superColumn;
 
+    CassandraClient() {
+    }
+
+    @Override
+    public void close() throws Exception {
+        transport.close();
     }
 
     @Override
     public void init(Configurator configurator) {
+        if(log.isDebugEnabled()) {
+            log.debug("Configurator: " + configurator);
+        }
         try {
+            log.info("Client initialization: " +
+                    configurator.getHost(DEFAULT_HOST) +
+                    ":" +
+                    configurator.getPort(DEFAULT_PORT));
             transport = new TFramedTransport(new TSocket(
                     configurator.getHost(DEFAULT_HOST),
                     configurator.getPort(DEFAULT_PORT))
@@ -86,15 +99,13 @@ public class CassandraClient implements Database {
 
     @Override
     public void write(String key, ByteBuffer value) {
-        List<Mutation> mutations = new ArrayList<>(1);
-        Map<String, List<Mutation>> mutationMap = new HashMap<>(1);
-        Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<>(1);
+
+        Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<ByteBuffer, Map<String, List<Mutation>>>(1);
 
         ByteBuffer wrappedKey;
 
-        Column col;
-        ColumnOrSuperColumn superColumn;
-        col = new Column();
+        ColumnOrSuperColumn superColumn = getSuperColumn();
+        Column col = superColumn.column;
         try {
             wrappedKey = ByteBuffer.wrap(key.getBytes("UTF-8"));
             col.setName(ByteBuffer.wrap(columnName.getBytes("UTF-8")));
@@ -105,11 +116,7 @@ public class CassandraClient implements Database {
             throw new RuntimeException(e);
         }
         col.setTimestamp(System.currentTimeMillis());
-        superColumn = new ColumnOrSuperColumn();
-        superColumn.setColumn(col);
-        mutations.add(new Mutation().setColumn_or_supercolumn(superColumn));
 
-        mutationMap.put(columnFamily, mutations);
         record.put(wrappedKey, mutationMap);
         for (int i=0; i<10; i++) {
             try {
@@ -122,6 +129,9 @@ public class CassandraClient implements Database {
                 e.printStackTrace();
                 log.error(e.getMessage());
                 continue;
+            }
+            if(log.isDebugEnabled()) {
+                log.debug("Written key:" + key + " value: " + value);
             }
             return;
         }
@@ -148,6 +158,9 @@ public class CassandraClient implements Database {
                 result = column.column.value;
 
             }
+            if(log.isDebugEnabled()) {
+                log.debug("Read key:" + key + " value: " + result);
+            }
             return result;
         } catch (TException e) {
             e.printStackTrace();
@@ -167,8 +180,18 @@ public class CassandraClient implements Database {
         return def;
     }
 
-    @Override
-    public void close() throws Exception {
-        transport.close();
+    private void initMutationMap() {
+        superColumn = new ColumnOrSuperColumn();
+        superColumn.setColumn(new Column());
+        List<Mutation> mutations = new ArrayList<Mutation>(1);
+        mutations.add(new Mutation().setColumn_or_supercolumn(superColumn));
+        mutationMap.put(columnFamily, mutations);
+    }
+
+    private ColumnOrSuperColumn getSuperColumn() {
+        if(superColumn == null) {
+            initMutationMap();
+        }
+        return superColumn;
     }
 }
