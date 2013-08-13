@@ -162,29 +162,14 @@ public class CassandraClient implements Database {
 
     @Override
     public ByteBuffer read(String key) {
-        SlicePredicate predicate;
-        ByteBuffer result = null;
-        ColumnParent parent = new ColumnParent(columnFamily);
-
+        ColumnPath parent = new ColumnPath(columnFamily);
         try {
-            ByteBuffer cn = ByteBuffer.wrap(columnName.getBytes("UTF-8"));
-            predicate = new SlicePredicate().setSlice_range(
-                    new SliceRange(cn, cn, false, 1)
-            );
-            List<ColumnOrSuperColumn> results = client.get_slice(
+            parent.column = ByteBuffer.wrap(columnName.getBytes("UTF-8"));
+            return client.get(
                     ByteBuffer.wrap(key.getBytes("UTF-8")),
                     parent,
-                    predicate,
                     readConsistencyLevel
-            );
-            for (ColumnOrSuperColumn column : results) {
-                result = column.column.value;
-
-            }
-            if(log.isDebugEnabled()) {
-                log.debug("Read key:" + key + " value: " + result);
-            }
-            return result;
+            ).column.value;
         } catch (TException e) {
             e.printStackTrace();
             log.error(e.getMessage());
