@@ -40,6 +40,7 @@ public class CassandraClient implements Database<Map<String, String>> {
     private String columnFamily;
 
     private Cassandra.Client client;
+    private TTransport transport;
 
 
     CassandraClient() {
@@ -49,7 +50,7 @@ public class CassandraClient implements Database<Map<String, String>> {
     @Override
     public void init(Configurator configurator) {
         try {
-            TTransport transport = new TFramedTransport(new TSocket(
+            transport = new TFramedTransport(new TSocket(
                     configurator.getHost(DEFAULT_HOST),
                     configurator.getPort(DEFAULT_PORT))
             );
@@ -155,10 +156,10 @@ public class CassandraClient implements Database<Map<String, String>> {
 
     private void authenticate(Configurator configurator) throws TException {
         String username = configurator.getString(USERNAME_PROPERTY, null);
-        String password = configurator.getString(PASSWORD_PROPERTY, null);
         if(username != null) {
             Map<String, String> cred = new HashMap<String, String>(2);
             cred.put(USERNAME_PROPERTY, username);
+            String password = configurator.getString(PASSWORD_PROPERTY, null);
             if(password != null) {
                 cred.put(PASSWORD_PROPERTY, password);
             }
@@ -173,5 +174,10 @@ public class CassandraClient implements Database<Map<String, String>> {
             return ConsistencyLevel.valueOf(levelName);
         }
         return def;
+    }
+
+    @Override
+    public void close() throws Exception {
+        transport.close();
     }
 }
