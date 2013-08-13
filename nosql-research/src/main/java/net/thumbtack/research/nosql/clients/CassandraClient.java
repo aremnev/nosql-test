@@ -16,7 +16,7 @@ import java.util.List;
 
 public class CassandraClient implements Database {
     private static final String DEFAULT_HOST = "localhost";
-    private static final int DEFAULT_PORT = 3333;
+    private static final int DEFAULT_PORT = 9160;
     private static final String KEY_SPACE_PROPERTY = "keySpace";
     private static final String COLUMN_FAMILY_PROPERTY = "columnFamily";
     private static final String DEFAULT_KEY_SPACE = "key_space";
