@@ -36,8 +36,8 @@ public class ConsistencyAScenario extends Scenario {
         if (!writtenValue.equals(readValue)) {
 	        ResearcherReport.addValueFailure();
 	        ResearcherReport.addFailure();
-            log.warn("Written and read values for key {} are different. Written: {}, Read: {} ",
-		            new Object [] { key, writtenValue, readValue } );
+	        log.warn("Written and read values for key {} are different", new Object [] { key } );
+            log.debug("Written: {}, Read: {} ", new Object [] { writtenValue, readValue } );
         }
     }
 

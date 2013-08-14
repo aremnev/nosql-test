@@ -64,6 +64,7 @@ public class Researcher {
 
         List<Scenario> scs = new ArrayList<>(threadsCount);
 	    log.info("Scheduling tests...");
+	    Split schenarioSplit = ResearcherReport.scenario.start();
         for (Database initDB : dbs) {
             try {
                 Scenario sc = ScenarioPool.get(config.getScName());
@@ -85,21 +86,25 @@ public class Researcher {
 
 	    log.info("Tests complete");
 
-	    log.warn("---------------------------------------------------------------------");
-        log.warn("Total writes: " + ResearcherReport.actions.getCounter());
-	    log.warn("Total failures: " + ResearcherReport.failures.getCounter());
-        log.warn("Incomplete writes: " + ResearcherReport.valueFailures.getCounter());
-	    log.warn("Action timings: total={}ms, min={}ms, mean={}ms, max={}ms",
-			    new Object [] {
-					    new Long(ResearcherReport.actions.getTotal() / 1000000),
-					    new Long(ResearcherReport.actions.getMin() / 1000000),
-					    new Double(ResearcherReport.actions.getMean() / 1000000),
-					    new Long(ResearcherReport.actions.getMax() / 1000000)
-			    }
-	    );
+	    printReport();
     }
 
-    private static Options getOptions() {
+	private static void printReport() {
+		log.warn("---------------------------------------------------------------------");
+		log.warn("Total writes: " + ResearcherReport.actions.getCounter());
+		log.warn("Total failures: " + ResearcherReport.failures.getCounter());
+		log.warn("Incomplete writes: " + ResearcherReport.valueFailures.getCounter());
+		log.warn("Action timings: total={}ms, min={}ms, mean={}ms, max={}ms",
+				new Object[]{
+						new Double((double) ResearcherReport.actions.getTotal() / 1000000),
+						new Double((double) ResearcherReport.actions.getMin() / 1000000),
+						new Double(ResearcherReport.actions.getMean() / 1000000),
+						new Double((double) ResearcherReport.actions.getMax() / 1000000)
+				}
+		);
+	}
+
+	private static Options getOptions() {
         return  new Options()
                 .addOption(CLI_CONFIG.substring(0, 1), CLI_CONFIG, true, "Config file name")
                 .addOption(CLI_HELP.substring(0, 1), CLI_HELP, false, "Show this is help");
