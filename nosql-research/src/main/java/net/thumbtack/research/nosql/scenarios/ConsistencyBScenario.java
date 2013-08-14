@@ -37,7 +37,7 @@ public class ConsistencyBScenario extends Scenario {
     private static int readersCount = 0;
     private static final char DELIMETER = '\t';
     private static String groupKey;
-    private static Map<Long, ByteBuffer> groupReadValues;
+    private static List<ByteBuffer> groupReadValues;
     private static Semaphore groupReadSemaphore;
     private static Semaphore groupAggrSemaphore;
 
@@ -47,7 +47,7 @@ public class ConsistencyBScenario extends Scenario {
 
     private String key;
     private Role role;
-    private Map<Long, ByteBuffer> readValues;
+    private List<ByteBuffer> readValues;
     private Semaphore readSemaphore;
     private Semaphore aggrSemaphore;
 
@@ -59,11 +59,11 @@ public class ConsistencyBScenario extends Scenario {
                 readersCount = config.getDbHosts().length;
                 rolesCount = readersCount + 1;
             }
-            this.writesCount = config.getScWrites()/(config.getScThreads()/rolesCount);
+            this.writesCount = config.getScWrites() / (config.getScThreads() / rolesCount);
             role = getRole();
             if (role.equals(Role.writer)) {
                 groupKey = UUID.randomUUID().toString();
-                groupReadValues = new LinkedHashMap<>();
+                groupReadValues = new ArrayList<>();
                 groupReadSemaphore = new Semaphore(readersCount);
                 groupAggrSemaphore = new Semaphore(readersCount);
                 try {
@@ -94,6 +94,8 @@ public class ConsistencyBScenario extends Scenario {
             aggregation();
         } else {
             readSemaphore.acquire(1);
+            read();
+            read();
             read();
             aggrSemaphore.release(1);
         }
@@ -133,24 +135,34 @@ public class ConsistencyBScenario extends Scenario {
             Split readSplit = Reporter.startEvent();
             ByteBuffer buffer = db.read(key);
             Reporter.addEvent(Reporter.STOPWATCH_READ, readSplit);
-            readValues.put(System.nanoTime(), buffer);
+            readValues.add(buffer);
         }
     }
 
     private void aggregation() {
-
         long oldTimestamp = 0;
-        for (long time : readValues.keySet()) {
-            long newTimestamp = getTimestamp(readValues.get(time));
+        long old = -1;
+        StringBuilder detailedString = new StringBuilder();
+        for (ByteBuffer buffer : readValues) {
+            long newTimestamp = getTimestamp(buffer);
             if (detailedLog.isDebugEnabled()) {
-                detailedLog.debug(key + "\t{}\t{}", time, newTimestamp);
+                if (old == -1) {
+                    old = newTimestamp;
+                }
+                if (old == newTimestamp) {
+                    detailedString.append("O ");
+                } else {
+                    detailedString.append("N ");
+                }
             }
             if (oldTimestamp > newTimestamp) {
-                Reporter.addEvent(Reporter.STOPWATCH_VALUE_FAILURE);
                 Reporter.addEvent(Reporter.STOPWATCH_FAILURE);
                 AggregatedReporter.addEvent(AggregatedReporter.EVENT_OLD_VALUE);
             }
             oldTimestamp = newTimestamp;
+        }
+        if (detailedLog.isDebugEnabled()) {
+            detailedLog.debug("{}\t{}", key, detailedString.toString());
         }
         readValues.clear();
     }
