@@ -14,7 +14,8 @@ import java.util.UUID;
  * Date: 13.08.13
  * Time: 10:45
  * <p/>
- * Test database consistency.
+ * Test database consistency. This is simple consistency test. This is test showing how database work with different
+ * consistency levels.
  */
 public class ConsistencyAScenario extends Scenario {
     private static final Logger log = LoggerFactory.getLogger(ConsistencyAScenario.class);

@@ -18,7 +18,13 @@ import java.util.*;
  * Date: 13.08.13
  * Time: 10:45
  * <p/>
- * Test database consistency
+ * Test database consistency. This test checking real database consistency with consistency level ALL.
+ * This is test try to do more then one reads and get new values of record before old values of record in same time.
+ * <p/>
+ * Some usage advices:
+ *  count of servers in db.hosts parameter must be more then one
+ *  set threads count as (x+1) * n, x - is count of servers in db.hosts parameters, and n - is count of writers
+ *  set read and write consistency to ALL
  */
 public class ConsistencyBScenario extends Scenario {
     private static final Logger log = LoggerFactory.getLogger(ConsistencyBScenario.class);
