@@ -5,11 +5,12 @@ import net.thumbtack.research.nosql.ResearcherReport;
 import net.thumbtack.research.nosql.clients.Database;
 import net.thumbtack.research.nosql.utils.LongSerializer;
 import net.thumbtack.research.nosql.utils.StringSerializer;
-import org.javasimon.SimonManager;
 import org.javasimon.Split;
 import org.javasimon.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Random;
 
 /**
  * User: vkornev
@@ -30,11 +31,13 @@ public abstract class Scenario implements Runnable {
     protected Configurator config;
 
 	protected Stopwatch actionStopwatch;
+    private long stringSize;
 
-	public void init(Database database, Configurator config) {
+    public void init(Database database, Configurator config) {
         this.db = database;
         this.config = config;
         this.writesCount = this.config.getScWrites() / this.config.getScThreads();
+        this.stringSize = this.config.getSCStringSize();
     }
 
     @Override
@@ -62,5 +65,17 @@ public abstract class Scenario implements Runnable {
 
     public synchronized void close() {
         isRunning = false;
+    }
+
+    public String generateString(String prefix) {
+        char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
+        StringBuilder sb = new StringBuilder();
+        sb.append(prefix + "-");
+        Random random = new Random();
+        for (int i = 0; i < stringSize; i++) {
+            char c = chars[random.nextInt(chars.length)];
+            sb.append(c);
+        }
+        return sb.toString();
     }
 }

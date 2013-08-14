@@ -28,7 +28,7 @@ public class ConsistencyAScenario extends Scenario {
 
     @Override
     protected void action() throws Exception {
-        String writtenValue = UUID.randomUUID().toString();
+        String writtenValue = generateString("");
 
 	    // write
 	    Split writeSplit = ResearcherReport.startEvent();

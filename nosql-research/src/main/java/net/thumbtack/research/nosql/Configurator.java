@@ -23,6 +23,7 @@ public class Configurator {
     private final static String SC_NAME_PROPERTY = "sc.name";
     private final static String SC_THREADS_PROPERTY = "sc.threads";
     private final static String SC_WRITES_PROPERTY = "sc.writes";
+    private final static String SC_STRING_SIZE_PROPERTY = "sc.stringSize";
     private String[] hosts;
     private int hostsIdx = -1;
 
@@ -85,6 +86,10 @@ public class Configurator {
 
     public long getScWrites() {
         return getLong(SC_WRITES_PROPERTY, null);
+    }
+
+    public long getSCStringSize() {
+        return getLong(SC_STRING_SIZE_PROPERTY, null);
     }
 
 

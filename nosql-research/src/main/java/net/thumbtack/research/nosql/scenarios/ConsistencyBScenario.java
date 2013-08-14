@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Arrays;
+import java.util.Queue;
 import java.util.UUID;
 
 /**
@@ -26,6 +28,7 @@ public class ConsistencyBScenario extends Scenario {
     private static List<Long> groupReadValues;
     private static int roleIdx = 0;
     private static int rolesCount = 0;
+    private char delimeter = '-';
 
     private enum Role {
         writer, reader;
@@ -93,8 +96,8 @@ public class ConsistencyBScenario extends Scenario {
 
     private void write() {
         Split writeSplit = ResearcherReport.startEvent();
-        Long timestamp = System.nanoTime();
-        db.write(key, ls.toByteBuffer(timestamp));
+        String value = generateString(System.nanoTime() + delimeter + "");
+        db.write(key, ss.toByteBuffer(value));
         ResearcherReport.addEvent(ResearcherReport.STOPWATCH_WRITE, writeSplit);
     }
 
@@ -102,13 +105,19 @@ public class ConsistencyBScenario extends Scenario {
         try {
             synchronized (key) {
                 Split readSplit = ResearcherReport.startEvent();
-                ByteBuffer value = db.read(key);
-                ResearcherReport.addEvent(ResearcherReport.STOPWATCH_READ, readSplit);
-                if (value != null) {
-                    readValues.add(ls.fromByteBuffer(value));
-                } else {
-                    readValues.add(0L);
+                ByteBuffer buffer = db.read(key);
+                Long value = 0L;
+                if(buffer != null) {
+                    byte[] bytes = buffer.array();
+                    for (int i = buffer.position(); i < bytes.length ;i++) {
+                        if (bytes[i] == delimeter) {
+                            value = Long.valueOf(new String(Arrays.copyOfRange(bytes, buffer.position(), i)));
+                            break;
+                        }
+                    }
                 }
+                ResearcherReport.addEvent(ResearcherReport.STOPWATCH_READ, readSplit);
+                readValues.add(value);
             }
         } catch (Exception e) {
             readValues.add(0L);
