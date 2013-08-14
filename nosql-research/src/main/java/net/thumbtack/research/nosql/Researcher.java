@@ -5,9 +5,7 @@ import net.thumbtack.research.nosql.clients.DatabasePool;
 import net.thumbtack.research.nosql.scenarios.Scenario;
 import net.thumbtack.research.nosql.scenarios.ScenarioPool;
 import org.apache.commons.cli.*;
-import org.javasimon.SimonManager;
-import org.javasimon.Stopwatch;
-import org.apache.commons.lang.StringUtils;
+import org.javasimon.Split;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +14,8 @@ import java.util.List;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import static net.thumbtack.research.nosql.ResearcherReport.*;
 
 /**
  * User: vkornev
@@ -49,7 +49,7 @@ public class Researcher {
         List<Database> dbs = new ArrayList<>(threadsCount);
         Database db;
 
-	    log.info("Initializing clients...");
+	    log.info("Initializing {} clients...", threadsCount);
         for (int i=0; i < threadsCount; i++) {
             try {
                 db = DatabasePool.get(config.getDbName());
@@ -64,7 +64,7 @@ public class Researcher {
 
         List<Scenario> scs = new ArrayList<>(threadsCount);
 	    log.info("Scheduling tests...");
-	    Split schenarioSplit = ResearcherReport.scenario.start();
+	    Split scenarioSplit = startEvent();
         for (Database initDB : dbs) {
             try {
                 Scenario sc = ScenarioPool.get(config.getScName());
@@ -78,28 +78,46 @@ public class Researcher {
             }
         }
 
-	    log.info("Running tests...");
+	    log.info("Running tests with {} actions...", config.getScWrites());
         while (threadPool.getActiveCount() > 0) {}
+	    addEvent(STOPWATCH_SCENARIO, scenarioSplit);
 
 	    log.info("Shutting down clients...");
         threadPool.shutdown();
 
-	    log.info("Tests complete");
+	    log.info("--- Tests complete ---");
 
 	    printReport();
     }
 
 	private static void printReport() {
-		log.warn("---------------------------------------------------------------------");
-		log.warn("Total writes: " + ResearcherReport.actions.getCounter());
-		log.warn("Total failures: " + ResearcherReport.failures.getCounter());
-		log.warn("Incomplete writes: " + ResearcherReport.valueFailures.getCounter());
-		log.warn("Action timings: total={}ms, min={}ms, mean={}ms, max={}ms",
+		log.info("Total time: {}ms", getTotal(STOPWATCH_SCENARIO));
+		log.info("Total writes: " + getCount(STOPWATCH_ACTION));
+		log.info("Total failures: " + getCount(STOPWATCH_FAILURE));
+		log.info("Incomplete writes: " + getCount(STOPWATCH_VALUE_FAILURE));
+		log.info("Average throughput: {} req/sec", getCount(STOPWATCH_ACTION) / getTotal(STOPWATCH_SCENARIO) * 1000);
+		log.info("Action timings:\t total={}ms, \tmin={}ms, \tmean={}ms, \tmax={}ms",
 				new Object[]{
-						new Double((double) ResearcherReport.actions.getTotal() / 1000000),
-						new Double((double) ResearcherReport.actions.getMin() / 1000000),
-						new Double(ResearcherReport.actions.getMean() / 1000000),
-						new Double((double) ResearcherReport.actions.getMax() / 1000000)
+						getTotal(STOPWATCH_ACTION),
+						getMin(STOPWATCH_ACTION),
+						getMean(STOPWATCH_ACTION),
+						getMax(STOPWATCH_ACTION)
+				}
+		);
+		log.info("Writing timings:\t total={}ms, \tmin={}ms, \tmean={}ms, \tmax={}ms",
+				new Object[]{
+						getTotal(STOPWATCH_WRITE),
+						getMin(STOPWATCH_WRITE),
+						getMean(STOPWATCH_WRITE),
+						getMax(STOPWATCH_WRITE)
+				}
+		);
+		log.info("Reading timings:\t total={}ms, \tmin={}ms, \tmean={}ms, \tmax={}ms",
+				new Object[]{
+						getTotal(STOPWATCH_READ),
+						getMin(STOPWATCH_READ),
+						getMean(STOPWATCH_READ),
+						getMax(STOPWATCH_READ)
 				}
 		);
 	}

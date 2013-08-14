@@ -69,7 +69,7 @@ public class CassandraClient implements Database {
         try {
             String host = configurator.getNextDbHost(DEFAULT_HOST);
             int port = configurator.getDbPort(DEFAULT_PORT);
-            log.info("Client initialization: " + host + ":" + port);
+            log.debug("Client initialization: " + host + ":" + port);
             transport = new TFramedTransport(new TSocket(host, port));
             client = new Cassandra.Client(new TBinaryProtocol(transport));
             transport.open();

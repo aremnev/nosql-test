@@ -4,6 +4,7 @@ import net.thumbtack.research.nosql.Configurator;
 import net.thumbtack.research.nosql.ResearcherReport;
 import net.thumbtack.research.nosql.clients.Database;
 import net.thumbtack.research.nosql.utils.StringSerializer;
+import org.javasimon.Split;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,14 +31,25 @@ public class ConsistencyAScenario extends Scenario {
     @Override
     protected void action() throws Exception {
         String writtenValue = UUID.randomUUID().toString();
-        db.write(key, ss.toByteBuffer(writtenValue));
-        String readValue = ss.fromByteBuffer(db.read(key));
 
-        if (!writtenValue.equals(readValue)) {
-	        ResearcherReport.addValueFailure();
-	        ResearcherReport.addFailure();
-	        log.warn("Written and read values for key {} are different", new Object [] { key } );
-            log.debug("Written: {}, Read: {} ", new Object [] { writtenValue, readValue } );
+	    // write
+	    Split writeSplit = ResearcherReport.startEvent();
+	    db.write(key, ss.toByteBuffer(writtenValue));
+	    ResearcherReport.addEvent(ResearcherReport.STOPWATCH_WRITE, writeSplit);
+
+	    // read
+	    Split readSplit = ResearcherReport.startEvent();
+	    String readValue = ss.fromByteBuffer(db.read(key));
+	    ResearcherReport.addEvent(ResearcherReport.STOPWATCH_READ, readSplit);
+
+        // compare
+	    if (!writtenValue.equals(readValue)) {
+	        ResearcherReport.addEvent(ResearcherReport.STOPWATCH_VALUE_FAILURE);
+	        ResearcherReport.addEvent(ResearcherReport.STOPWATCH_FAILURE);
+	        log.warn("Written and read values for key {} are different", new Object[]{key});
+            if(log.isDebugEnabled()) {
+	            log.debug("Key: {}, Written: {}, Read: {} ", new Object [] { key, writtenValue, readValue } );
+            }
         }
     }
 

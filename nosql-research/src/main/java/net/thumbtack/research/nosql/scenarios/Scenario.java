@@ -3,7 +3,6 @@ package net.thumbtack.research.nosql.scenarios;
 import net.thumbtack.research.nosql.Configurator;
 import net.thumbtack.research.nosql.ResearcherReport;
 import net.thumbtack.research.nosql.clients.Database;
-import org.javasimon.SimonManager;
 import org.javasimon.Split;
 import org.javasimon.Stopwatch;
 import org.slf4j.Logger;
@@ -40,11 +39,11 @@ public abstract class Scenario implements Runnable {
             synchronized (this) {
                 if (!isRunning) return;
                 try {
-                    Split split = ResearcherReport.actions.start();
+                    Split split = ResearcherReport.startEvent();
 	                action();
-	                split.stop();
+	                ResearcherReport.addEvent(ResearcherReport.STOPWATCH_ACTION, split);
                 } catch (Exception e) {
-	                ResearcherReport.addFailure();
+	                ResearcherReport.addEvent(ResearcherReport.STOPWATCH_FAILURE);
                     log.error(e.getMessage());
                 }
             }
