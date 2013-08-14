@@ -5,9 +5,14 @@ import net.thumbtack.research.nosql.clients.DatabasePool;
 import net.thumbtack.research.nosql.scenarios.Scenario;
 import net.thumbtack.research.nosql.scenarios.ScenarioPool;
 import org.apache.commons.cli.*;
+import org.javasimon.SimonManager;
+import org.javasimon.Stopwatch;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -47,6 +52,7 @@ public class Researcher {
         List<Database> dbs = new ArrayList<>(threadsCount);
         Database db;
 
+	    log.info("Initializing clients...");
         for (int i=0; i < threadsCount; i++) {
             try {
                 db = DatabasePool.get(config.getDbName());
@@ -59,8 +65,8 @@ public class Researcher {
             }
         }
 
-        log.info("Start scenarios");
         List<Scenario> scs = new ArrayList<>(threadsCount);
+	    log.info("Scheduling tests...");
         for (Database initDB : dbs) {
             try {
                 Scenario sc = ScenarioPool.get(config.getScName());
@@ -74,9 +80,10 @@ public class Researcher {
             }
         }
 
-
+	    log.info("Running tests...");
         while (threadPool.getActiveCount() > 0) {}
 
+	    log.info("Shutting down clients...");
         threadPool.shutdown();
 
         long successful = 0;
@@ -85,9 +92,20 @@ public class Researcher {
             successful += s.getSw();
             failed += s.getFw();
         }
+	    log.info("Tests complete");
 
-        log.warn("Total writes: " + (successful + failed));
-        log.warn("Failed writes: " + failed);
+	    log.warn("---------------------------------------------------------------------");
+        log.warn("Total writes: " + ResearcherReport.actions.getCounter());
+	    log.warn("Total failures: " + ResearcherReport.failures.getCounter());
+        log.warn("Incomplete writes: " + ResearcherReport.valueFailures.getCounter());
+	    log.warn("Action timings: total={}ms, min={}ms, mean={}ms, max={}ms",
+			    new Object [] {
+					    new Long(ResearcherReport.actions.getTotal() / 1000000),
+					    new Long(ResearcherReport.actions.getMin() / 1000000),
+					    new Double(ResearcherReport.actions.getMean() / 1000000),
+					    new Long(ResearcherReport.actions.getMax() / 1000000)
+			    }
+	    );
     }
 
     private static Options getOptions() {
@@ -104,4 +122,5 @@ public class Researcher {
         }
         return true;
     }
+
 }

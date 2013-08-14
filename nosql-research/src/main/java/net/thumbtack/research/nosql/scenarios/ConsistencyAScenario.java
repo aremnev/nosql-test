@@ -1,5 +1,6 @@
 package net.thumbtack.research.nosql.scenarios;
 
+import net.thumbtack.research.nosql.ResearcherReport;
 import net.thumbtack.research.nosql.clients.Database;
 import net.thumbtack.research.nosql.utils.StringSerializer;
 import org.slf4j.Logger;
@@ -31,15 +32,12 @@ public class ConsistencyAScenario extends Scenario {
         String writtenValue = UUID.randomUUID().toString();
         db.write(key, ss.toByteBuffer(writtenValue));
         String readValue = ss.fromByteBuffer(db.read(key));
+
         if (!writtenValue.equals(readValue)) {
-            log.warn("Written and read values are different. " +
-                    "Key: " + key +
-                    " Written data: " + writtenValue +
-                    "; Read data: " + readValue);
-            fw++;
-        }
-        else {
-            sw++;
+	        ResearcherReport.addValueFailure();
+	        ResearcherReport.addFailure();
+            log.warn("Written and read values for key {} are different. Written: {}, Read: {} ",
+		            new Object [] { key, writtenValue, readValue } );
         }
     }
 
