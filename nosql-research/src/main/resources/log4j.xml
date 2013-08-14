@@ -17,9 +17,23 @@
         </layout>
     </appender>
 
+    <appender name="detailedFile" class="org.apache.log4j.FileAppender">
+        <param name="file" value="./detailed.log" />
+        <param name="threshold" value="debug" />
+        <param name="append" value="false"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%m\n" />
+        </layout>
+    </appender>
+
     <logger name="timeseries" additivity="false">
         <level value="debug"/>
         <appender-ref ref="file" />
+    </logger>
+
+    <logger name="detailed" additivity="false">
+        <level value="debug"/>
+        <appender-ref ref="detailedFile" />
     </logger>
 
 	<root>
