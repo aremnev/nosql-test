@@ -1,5 +1,6 @@
 package net.thumbtack.research.nosql.scenarios;
 
+import net.thumbtack.research.nosql.Configurator;
 import net.thumbtack.research.nosql.ResearcherReport;
 import net.thumbtack.research.nosql.clients.Database;
 import org.javasimon.SimonManager;
@@ -21,12 +22,14 @@ public abstract class Scenario implements Runnable {
     protected Database db;
     protected long writesCount;
     protected boolean isRunning = false;
+    protected Configurator config;
 
 	protected Stopwatch actionStopwatch;
 
-	public void init(Database database, long writesCount) {
+	public void init(Database database, Configurator config) {
         this.db = database;
-        this.writesCount = writesCount;
+        this.config = config;
+        this.writesCount = this.config.getScWrites() / this.config.getScThreads();
     }
 
     @Override

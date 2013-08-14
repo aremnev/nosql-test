@@ -11,8 +11,6 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.concurrent.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -45,7 +43,6 @@ public class Researcher {
         Configurator config = new Configurator(commandLine.getOptionValue(CLI_CONFIG));
 
         int threadsCount = config.getScThreads();
-        long writesCount = config.getScWrites();
 
         ThreadPoolExecutor threadPool = new ThreadPoolExecutor(threadsCount, threadsCount, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
 
@@ -70,7 +67,7 @@ public class Researcher {
         for (Database initDB : dbs) {
             try {
                 Scenario sc = ScenarioPool.get(config.getScName());
-                sc.init(initDB, writesCount / threadsCount);
+                sc.init(initDB, config);
                 scs.add(sc);
                 threadPool.submit(sc);
             } catch (Exception e) {

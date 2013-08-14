@@ -1,5 +1,6 @@
 package net.thumbtack.research.nosql.scenarios;
 
+import net.thumbtack.research.nosql.Configurator;
 import net.thumbtack.research.nosql.clients.Database;
 import net.thumbtack.research.nosql.utils.StringSerializer;
 import org.slf4j.Logger;
@@ -20,8 +21,8 @@ public class ConsistencyBScenario extends Scenario {
     private String key;
 
     @Override
-    public void init(Database database, long writesCount) {
-        super.init(database, writesCount);
+    public void init(Database database, Configurator config) {
+        super.init(database, config);
         synchronized (ConsistencyBScenario.class) {
 
         }
