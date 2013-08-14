@@ -9,7 +9,7 @@ import java.util.HashMap;
 /**
  * Used to track test events and timings
  */
-public class ResearcherReport {
+public class Reporter {
 
 	private static final long NANOS_IN_MILLI = 1000000;
 

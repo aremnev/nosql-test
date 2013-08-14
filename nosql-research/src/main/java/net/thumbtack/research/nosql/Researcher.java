@@ -15,7 +15,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static net.thumbtack.research.nosql.ResearcherReport.*;
+import static net.thumbtack.research.nosql.Reporter.*;
 
 /**
  * User: vkornev
@@ -90,11 +90,36 @@ public class Researcher {
 	    printReport();
     }
 
+	private static Options getOptions() {
+        return  new Options()
+                .addOption(CLI_CONFIG.substring(0, 1), CLI_CONFIG, true, "Config file name")
+                .addOption(CLI_HELP.substring(0, 1), CLI_HELP, false, "Show this is help");
+    }
+
+    private static boolean isCommandLineValid(CommandLine commandLine, Options options) {
+        if (commandLine.hasOption(CLI_HELP)
+                || !commandLine.hasOption(CLI_CONFIG)) {
+            new HelpFormatter().printHelp("nosql-research -c <config file name> [-h]", options);
+            return false;
+        }
+        return true;
+    }
+
 	private static void printReport() {
 		log.info("Total time: {}ms", getTotal(STOPWATCH_SCENARIO));
-		log.info("Total writes: " + getCount(STOPWATCH_ACTION));
-		log.info("Total failures: " + getCount(STOPWATCH_FAILURE));
-		log.info("Incomplete writes: " + getCount(STOPWATCH_VALUE_FAILURE));
+		log.info("Total writes: " + getCount(STOPWATCH_WRITE));
+		log.info("Total failures: {} ({}%)",
+				new Object[] {
+						getCount(STOPWATCH_FAILURE),
+						(double)getCount(STOPWATCH_FAILURE)/ getCount(STOPWATCH_WRITE) * 100
+				}
+		);
+		log.info("Incomplete writes: {} ({}%)",
+				new Object[] {
+						getCount(STOPWATCH_VALUE_FAILURE),
+						(double)getCount(STOPWATCH_VALUE_FAILURE)/ getCount(STOPWATCH_WRITE) * 100
+				}
+		);
 		log.info("Average throughput: {} req/sec", getCount(STOPWATCH_ACTION) / getTotal(STOPWATCH_SCENARIO) * 1000);
 		log.info("Action timings:\t total={}ms, \tmin={}ms, \tmean={}ms, \tmax={}ms",
 				new Object[]{
@@ -121,20 +146,5 @@ public class Researcher {
 				}
 		);
 	}
-
-	private static Options getOptions() {
-        return  new Options()
-                .addOption(CLI_CONFIG.substring(0, 1), CLI_CONFIG, true, "Config file name")
-                .addOption(CLI_HELP.substring(0, 1), CLI_HELP, false, "Show this is help");
-    }
-
-    private static boolean isCommandLineValid(CommandLine commandLine, Options options) {
-        if (commandLine.hasOption(CLI_HELP)
-                || !commandLine.hasOption(CLI_CONFIG)) {
-            new HelpFormatter().printHelp("nosql-research -c <config file name> [-h]", options);
-            return false;
-        }
-        return true;
-    }
 
 }
