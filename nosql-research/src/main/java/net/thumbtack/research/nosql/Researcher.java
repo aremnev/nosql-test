@@ -47,6 +47,8 @@ public class Researcher {
 
         ThreadPoolExecutor threadPool = new ThreadPoolExecutor(threadsCount, threadsCount, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
 
+        AggregatedReporter.configure(config);
+
         List<Database> dbs = new ArrayList<>(threadsCount);
         Database db;
 

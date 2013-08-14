@@ -24,6 +24,7 @@ public class Configurator {
     private final static String SC_THREADS_PROPERTY = "sc.threads";
     private final static String SC_WRITES_PROPERTY = "sc.writes";
     private final static String SC_STRING_SIZE_PROPERTY = "sc.stringSize";
+    private final static String REPORT_FLUSHINTERVAL_PROPERTY = "report.flushInterval";
     private String[] hosts;
     private int hostsIdx = -1;
 
@@ -92,6 +93,9 @@ public class Configurator {
         return getLong(SC_STRING_SIZE_PROPERTY, null);
     }
 
+    public int getReportFlushInterval() {
+        return getInt(REPORT_FLUSHINTERVAL_PROPERTY, null);
+    }
 
     @Override
     public String toString() {

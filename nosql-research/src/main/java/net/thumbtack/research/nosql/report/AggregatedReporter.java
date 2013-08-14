@@ -1,5 +1,6 @@
 package net.thumbtack.research.nosql.report;
 
+import net.thumbtack.research.nosql.Configurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,16 +31,19 @@ public class AggregatedReporter {
 
     public static final int EVENT_OLD_VALUE = 1;
 
-    public static final int FLUSH_INTERVAL = 1000;
     public static final int BUFFER_SIZE = 100000;
 
-    private static BatchUpdater<Event> eventUpdater = new BatchUpdater<Event>("aggregated-event", BUFFER_SIZE, FLUSH_INTERVAL) {{
-        addEvent(EVENT_OLD_VALUE, new FlushEvent<Event>() {
-            public void flush(Collection<Event> buffer) {
-                tslog.debug("{}\t{}", new Object[]{ System.nanoTime(), buffer.size()});
-            }
-        });
-    }};
+    private static BatchUpdater<Event> eventUpdater;
+
+    public static void configure(Configurator config) {
+        eventUpdater = new BatchUpdater<Event>("aggregated-event", BUFFER_SIZE, config.getReportFlushInterval()) {{
+            addEvent(EVENT_OLD_VALUE, new FlushEvent<Event>() {
+                public void flush(Collection<Event> buffer) {
+                    tslog.debug("{}\t{}", new Object[]{System.nanoTime(), buffer.size()});
+                }
+            });
+        }};
+    }
 
     public static void addEvent(int type) {
         Event event = new Event(System.nanoTime());
