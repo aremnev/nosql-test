@@ -130,7 +130,6 @@ public class ConsistencyBScenario extends Scenario {
 
     private void read() throws Exception {
         synchronized (key) {
-            // read
             Split readSplit = Reporter.startEvent();
             ByteBuffer buffer = db.read(key);
             Reporter.addEvent(Reporter.STOPWATCH_READ, readSplit);
@@ -143,7 +142,9 @@ public class ConsistencyBScenario extends Scenario {
         long oldTimestamp = 0;
         for (long time : readValues.keySet()) {
             long newTimestamp = getTimestamp(readValues.get(time));
-            detailedLog.debug(key + "\t{}\t{}", time, newTimestamp);
+            if (detailedLog.isDebugEnabled()) {
+                detailedLog.debug(key + "\t{}\t{}", time, newTimestamp);
+            }
             if (oldTimestamp > newTimestamp) {
                 Reporter.addEvent(Reporter.STOPWATCH_VALUE_FAILURE);
                 Reporter.addEvent(Reporter.STOPWATCH_FAILURE);
@@ -151,6 +152,7 @@ public class ConsistencyBScenario extends Scenario {
             }
             oldTimestamp = newTimestamp;
         }
+        readValues.clear();
     }
 
     private long getTimestamp(ByteBuffer buffer) {
