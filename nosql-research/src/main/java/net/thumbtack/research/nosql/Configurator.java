@@ -17,8 +17,12 @@ public class Configurator {
     private static final Logger log = LoggerFactory.getLogger(Configurator.class);
     private final ConcurrentMapConfiguration config;
 
-    private final static String HOST_PROPERTY = "host";
-    private final static String PORT_PROPERTY = "port";
+    private final static String DB_NAME_PROPERTY = "db.name";
+    private final static String DB_HOST_PROPERTY = "db.host";
+    private final static String DB_PORT_PROPERTY = "db.port";
+    private final static String SC_NAME_PROPERTY = "sc.name";
+    private final static String SC_THREADS_PROPERTY = "sc.threads";
+    private final static String SC_WRITES_PROPERTY = "sc.writes";
 
     public Configurator(String fileName) {
         try {
@@ -34,17 +38,38 @@ public class Configurator {
         return config.getString(key, def);
     }
 
-    public int getInt(String key, int def) {
-        return config.getInt(key, def);
+    public int getInt(String key, Integer def) {
+        return config.getInteger(key, def);
     }
 
-    public String getHost(String def) {
-        return getString(HOST_PROPERTY, def);
+    public long getLong(String key, Long def) {
+        return config.getLong(key, def);
     }
 
-    public int getPort(int def) {
-        return getInt(PORT_PROPERTY, def);
+    public String getDbName() {
+        return getString(DB_NAME_PROPERTY, null);
     }
+
+    public String getDbHost(String def) {
+        return getString(DB_HOST_PROPERTY, def);
+    }
+
+    public int getDbPort(int def) {
+        return getInt(DB_PORT_PROPERTY, def);
+    }
+
+    public String getScName() {
+        return getString(SC_NAME_PROPERTY, null);
+    }
+
+    public int getScThreads() {
+        return getInt(SC_THREADS_PROPERTY, null);
+    }
+
+    public long getScWrites() {
+        return getLong(SC_WRITES_PROPERTY, null);
+    }
+
 
     @Override
     public String toString() {

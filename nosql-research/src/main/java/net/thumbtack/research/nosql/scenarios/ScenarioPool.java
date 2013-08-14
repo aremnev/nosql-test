@@ -9,8 +9,8 @@ import java.util.Map;
  * Time: 10:46
  */
 public class ScenarioPool {
-    public static final String SC_CONSISTENCY = "consistency";
-    public static final String[] SCENARIOS = {SC_CONSISTENCY};
+    public static final String SC_CONSISTENCY_A = "consistency_a";
+    public static final String SC_CONSISTENCY_B = "consistency_b";
 
     private static final ScenarioPool instance = new ScenarioPool();
 
@@ -18,7 +18,8 @@ public class ScenarioPool {
 
     private ScenarioPool() {
         databasePool = new HashMap<>();
-        databasePool.put(SC_CONSISTENCY, ConsistencyScenario.class);
+        databasePool.put(SC_CONSISTENCY_A, ConsistencyAScenario.class);
+        databasePool.put(SC_CONSISTENCY_B, ConsistencyBScenario.class);
     }
 
     public static Scenario get(String scenarioName) throws IllegalAccessException, InstantiationException {

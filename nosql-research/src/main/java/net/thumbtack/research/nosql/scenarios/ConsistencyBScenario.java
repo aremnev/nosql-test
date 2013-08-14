@@ -5,7 +5,7 @@ import net.thumbtack.research.nosql.utils.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.ByteBuffer;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,15 +16,26 @@ import java.util.UUID;
  *
  * Test database consistency
  */
-public class ConsistencyScenario extends Scenario {
-    private static final Logger log = LoggerFactory.getLogger(ConsistencyScenario.class);
+public class ConsistencyBScenario extends Scenario {
+    private static final Logger log = LoggerFactory.getLogger(ConsistencyBScenario.class);
     private static final StringSerializer ss = StringSerializer.get();
+    private static final LinkedList<Integer> roles = new LinkedList<Integer>() {{
+        add(0);
+        add(1);
+        add(1);
+        add(1);
+    }};
+    private static String groupKey;
+
     private String key;
+    private int role;
 
     @Override
-    public void init(Database database, long writesCount, List<Long> successfulWrites, List<Long> failedWrites) {
-        super.init(database, writesCount, successfulWrites, failedWrites);
-        key = UUID.randomUUID().toString();
+    public void init(Database database, long writesCount) {
+        super.init(database, writesCount);
+        synchronized (ConsistencyBScenario.class) {
+
+        }
     }
 
     @Override

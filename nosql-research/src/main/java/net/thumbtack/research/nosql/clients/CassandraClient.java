@@ -13,7 +13,6 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,17 +22,17 @@ import java.util.Map;
 public class CassandraClient implements Database {
     private static final String DEFAULT_HOST = "localhost";
     private static final int DEFAULT_PORT = 9160;
-    private static final String KEY_SPACE_PROPERTY = "keySpace";
+    private static final String KEY_SPACE_PROPERTY = "cassandra.keySpace";
     private static final String DEFAULT_KEY_SPACE = "key_space";
-    private static final String COLUMN_FAMILY_PROPERTY = "columnFamily";
+    private static final String COLUMN_FAMILY_PROPERTY = "cassandra.columnFamily";
     private static final String DEFAULT_COLUMN_FAMILY = "column_family";
-    private static final String COLUMN_NAME_PROPERTY = "columnName";
+    private static final String COLUMN_NAME_PROPERTY = "cassandra.columnName";
     private static final String DEFAULT_COLUMN_NAME = "column_name";
 
-    private static final String READ_CONSISTENCY_LEVEL_PROPERTY = "readConsistencyLevel";
-    private static final String WRITE_CONSISTENCY_LEVEL_PROPERTY = "writeConsistencyLevel";
+    private static final String READ_CONSISTENCY_LEVEL_PROPERTY = "cassandra.readConsistencyLevel";
+    private static final String WRITE_CONSISTENCY_LEVEL_PROPERTY = "cassandra.writeConsistencyLevel";
 
-    private static final String REPLICATION_FACTOR_PROPERTY = "replicationFactor";
+    private static final String REPLICATION_FACTOR_PROPERTY = "cassandra.replicationFactor";
     private static final String DEFAULT_REPLICATION_FACTOR = "1";
 
     private static final Logger log = LoggerFactory.getLogger(CassandraClient.class);
@@ -67,12 +66,12 @@ public class CassandraClient implements Database {
         }
         try {
             log.info("Client initialization: " +
-                    configurator.getHost(DEFAULT_HOST) +
+                    configurator.getDbHost(DEFAULT_HOST) +
                     ":" +
-                    configurator.getPort(DEFAULT_PORT));
+                    configurator.getDbPort(DEFAULT_PORT));
             transport = new TFramedTransport(new TSocket(
-                    configurator.getHost(DEFAULT_HOST),
-                    configurator.getPort(DEFAULT_PORT))
+                    configurator.getDbHost(DEFAULT_HOST),
+                    configurator.getDbPort(DEFAULT_PORT))
             );
             client = new Cassandra.Client(new TBinaryProtocol(transport));
             transport.open();

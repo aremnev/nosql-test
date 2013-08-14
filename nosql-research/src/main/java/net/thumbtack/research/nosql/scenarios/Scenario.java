@@ -20,17 +20,13 @@ public abstract class Scenario implements Runnable {
 
     protected Database db;
     protected long writesCount;
-    protected List<Long> successfulWrites;
-    protected List<Long> failedWrites;
     protected long sw;
     protected long fw;
     protected boolean isRunning = false;
 
-    public void init(Database database, long writesCount, List<Long> successfulWrites, List<Long> failedWrites) {
+    public void init(Database database, long writesCount) {
         this.db = database;
         this.writesCount = writesCount;
-        this.successfulWrites = successfulWrites;
-        this.failedWrites = failedWrites;
         this.sw = 0;
         this.fw = 0;
     }
@@ -58,9 +54,13 @@ public abstract class Scenario implements Runnable {
 
     public synchronized void close() {
         isRunning = false;
-        synchronized (Scenario.class) {
-            successfulWrites.add(sw);
-            failedWrites.add(fw);
-        }
+    }
+
+    public long getSw() {
+        return sw;
+    }
+
+    public long getFw() {
+        return fw;
     }
 }

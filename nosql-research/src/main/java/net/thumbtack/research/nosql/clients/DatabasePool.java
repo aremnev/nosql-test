@@ -10,14 +10,13 @@ import java.util.Map;
  */
 public class DatabasePool {
     public static final String DB_CASSANDRA = "cassandra";
-    public static final String[] DATABASES = {DB_CASSANDRA};
 
     private static final DatabasePool instance = new DatabasePool();
     private final Map<String, Class<? extends Database>> databasePool;
 
     @SuppressWarnings("unchecked")
     private DatabasePool() {
-        databasePool = new HashMap<String, Class<? extends Database>>();
+        databasePool = new HashMap<>();
         databasePool.put(DB_CASSANDRA, CassandraClient.class);
     }
 
