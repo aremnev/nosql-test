@@ -35,6 +35,8 @@ public class CassandraClient implements Database {
     private static final String REPLICATION_FACTOR_PROPERTY = "cassandra.replicationFactor";
     private static final String DEFAULT_REPLICATION_FACTOR = "1";
 
+    private static final String STRATEGY_REPLICATION_FACTOR_PROPERTY = "replication_factor";
+
     private static final Logger log = LoggerFactory.getLogger(CassandraClient.class);
 
     private static final StringSerializer ss = StringSerializer.get();
@@ -48,7 +50,7 @@ public class CassandraClient implements Database {
     private Cassandra.Client client;
     private TTransport transport;
 
-    private final Map<String, List<Mutation>> mutationMap = new HashMap<String, List<Mutation>>(1);
+    private final Map<String, List<Mutation>> mutationMap = new HashMap<>(1);
     private ColumnOrSuperColumn superColumn;
 
     CassandraClient() {
@@ -65,41 +67,21 @@ public class CassandraClient implements Database {
             log.debug("Configurator: " + configurator);
         }
         try {
-            log.info("Client initialization: " +
-                    configurator.getDbHost(DEFAULT_HOST) +
-                    ":" +
-                    configurator.getDbPort(DEFAULT_PORT));
-            transport = new TFramedTransport(new TSocket(
-                    configurator.getDbHost(DEFAULT_HOST),
-                    configurator.getDbPort(DEFAULT_PORT))
-            );
+            String host = configurator.getNextDbHost(DEFAULT_HOST);
+            int port = configurator.getDbPort(DEFAULT_PORT);
+            log.info("Client initialization: " + host + ":" + port);
+            transport = new TFramedTransport(new TSocket(host, port));
             client = new Cassandra.Client(new TBinaryProtocol(transport));
             transport.open();
 
-            String keyspace = configurator.getString(KEY_SPACE_PROPERTY, DEFAULT_KEY_SPACE);
+            String keySpace = configurator.getString(KEY_SPACE_PROPERTY, DEFAULT_KEY_SPACE);
             String replicationFactor = configurator.getString(REPLICATION_FACTOR_PROPERTY, DEFAULT_REPLICATION_FACTOR);
             columnFamily = configurator.getString(COLUMN_FAMILY_PROPERTY, DEFAULT_COLUMN_FAMILY);
             columnName = configurator.getString(COLUMN_NAME_PROPERTY, DEFAULT_COLUMN_NAME);
 
-            KsDef ksDef;
-            try {
-                ksDef = client.describe_keyspace(keyspace);
-                ksDef.strategy_options.put("replication_factor", replicationFactor);
-                ksDef.cf_defs.clear();
-                client.system_update_keyspace(ksDef);
-            }
-            catch (NotFoundException e) {
-                List<CfDef> cfDefList = new ArrayList<>();
-                CfDef cfDef = new CfDef(keyspace, columnFamily);
-                cfDefList.add(cfDef);
-                ksDef = new KsDef(keyspace, SimpleStrategy.class.getName(), cfDefList);
-                Map<String, String> strategyOptions = new HashMap<>();
-                strategyOptions.put("replication_factor", replicationFactor);
-                ksDef.setStrategy_options(strategyOptions);
-                client.system_add_keyspace(ksDef);
-            }
+            setReplicationFactor(keySpace, replicationFactor);
 
-            client.set_keyspace(keyspace);
+            client.set_keyspace(keySpace);
 
             readConsistencyLevel = getConsistencyLevel(
                     configurator,
@@ -184,7 +166,7 @@ public class CassandraClient implements Database {
     private void initMutationMap() {
         superColumn = new ColumnOrSuperColumn();
         superColumn.setColumn(new Column());
-        List<Mutation> mutations = new ArrayList<Mutation>(1);
+        List<Mutation> mutations = new ArrayList<>(1);
         mutations.add(new Mutation().setColumn_or_supercolumn(superColumn));
         mutationMap.put(columnFamily, mutations);
     }
@@ -194,5 +176,25 @@ public class CassandraClient implements Database {
             initMutationMap();
         }
         return superColumn;
+    }
+
+    private void setReplicationFactor(String keySpace, String replicationFactor) throws TException {
+        KsDef ksDef;
+        try {
+            ksDef = client.describe_keyspace(keySpace);
+            ksDef.strategy_options.put(STRATEGY_REPLICATION_FACTOR_PROPERTY, replicationFactor);
+            ksDef.cf_defs.clear();
+            client.system_update_keyspace(ksDef);
+        }
+        catch (NotFoundException e) {
+            List<CfDef> cfDefList = new ArrayList<>();
+            CfDef cfDef = new CfDef(keySpace, columnFamily);
+            cfDefList.add(cfDef);
+            ksDef = new KsDef(keySpace, SimpleStrategy.class.getName(), cfDefList);
+            Map<String, String> strategyOptions = new HashMap<>();
+            strategyOptions.put(STRATEGY_REPLICATION_FACTOR_PROPERTY, replicationFactor);
+            ksDef.setStrategy_options(strategyOptions);
+            client.system_add_keyspace(ksDef);
+        }
     }
 }

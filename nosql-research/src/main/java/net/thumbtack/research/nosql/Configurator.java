@@ -23,6 +23,8 @@ public class Configurator {
     private final static String SC_NAME_PROPERTY = "sc.name";
     private final static String SC_THREADS_PROPERTY = "sc.threads";
     private final static String SC_WRITES_PROPERTY = "sc.writes";
+    private String[] hosts;
+    private int hostsIdx = -1;
 
     public Configurator(String fileName) {
         try {
@@ -50,8 +52,23 @@ public class Configurator {
         return getString(DB_NAME_PROPERTY, null);
     }
 
-    public String getDbHost(String def) {
-        return getString(DB_HOST_PROPERTY, def);
+    public String[] getDbHosts() {
+        hosts = config.getStringArray(DB_HOST_PROPERTY);
+        return hosts;
+    }
+
+    public String getNextDbHost(String def) {
+        if(hosts == null) {
+            getDbHosts();
+        }
+        if (hosts.length == 0) {
+            return def;
+        }
+        hostsIdx++;
+        if(hostsIdx >= hosts.length) {
+            hostsIdx = 0;
+        }
+        return hosts[hostsIdx];
     }
 
     public int getDbPort(int def) {
