@@ -86,12 +86,6 @@ public class Researcher {
 	    log.info("Shutting down clients...");
         threadPool.shutdown();
 
-        long successful = 0;
-        long failed = 0;
-        for (Scenario s: scs) {
-            successful += s.getSw();
-            failed += s.getFw();
-        }
 	    log.info("Tests complete");
 
 	    log.warn("---------------------------------------------------------------------");

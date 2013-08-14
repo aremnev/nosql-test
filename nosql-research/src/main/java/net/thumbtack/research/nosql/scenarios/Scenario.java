@@ -8,10 +8,6 @@ import org.javasimon.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
-import java.util.List;
-import java.util.Set;
-
 /**
  * User: vkornev
  * Date: 13.08.13
@@ -24,18 +20,13 @@ public abstract class Scenario implements Runnable {
 
     protected Database db;
     protected long writesCount;
-    protected long sw;
-    protected long fw;
     protected boolean isRunning = false;
 
-    public void init(Database database, long writesCount) {
 	protected Stopwatch actionStopwatch;
 
 	public void init(Database database, long writesCount) {
         this.db = database;
         this.writesCount = writesCount;
-        this.sw = 0;
-        this.fw = 0;
     }
 
     @Override
@@ -63,13 +54,5 @@ public abstract class Scenario implements Runnable {
 
     public synchronized void close() {
         isRunning = false;
-    }
-
-    public long getSw() {
-        return sw;
-    }
-
-    public long getFw() {
-        return fw;
     }
 }
