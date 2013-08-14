@@ -70,7 +70,7 @@ public abstract class Scenario implements Runnable {
     public String generateString(String prefix) {
         char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
         StringBuilder sb = new StringBuilder();
-        sb.append(prefix + "-");
+        sb.append(prefix);
         Random random = new Random();
         for (int i = 0; i < stringSize; i++) {
             char c = chars[random.nextInt(chars.length)];

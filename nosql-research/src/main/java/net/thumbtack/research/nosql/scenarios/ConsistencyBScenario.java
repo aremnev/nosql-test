@@ -28,7 +28,7 @@ public class ConsistencyBScenario extends Scenario {
     private static List<Long> groupReadValues;
     private static int roleIdx = 0;
     private static int rolesCount = 0;
-    private char delimeter = '-';
+    private char delimeter = '\t';
 
     private enum Role {
         writer, reader;
@@ -99,7 +99,8 @@ public class ConsistencyBScenario extends Scenario {
 
     private void write() {
         Split writeSplit = Reporter.startEvent();
-        String value = generateString(System.nanoTime() + delimeter + "");
+        String prefix = System.nanoTime() + "" + delimeter;
+        String value = generateString(prefix);
         db.write(key, ss.toByteBuffer(value));
         Reporter.addEvent(Reporter.STOPWATCH_WRITE, writeSplit);
     }
