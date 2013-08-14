@@ -105,17 +105,13 @@ public class ConsistencyBScenario extends Scenario {
     }
 
     private void read() {
-	    Long v = 0L;
+        Long value = 0L;
         try {
             synchronized (key) {
                 Split readSplit = Reporter.startEvent();
-                ByteBuffer value = db.read(key);
-                Reporter.addEvent(Reporter.STOPWATCH_READ, readSplit);
-                if (value != null) {
-                    v = ls.fromByteBuffer(value);
-                Split readSplit = ResearcherReport.startEvent();
                 ByteBuffer buffer = db.read(key);
-                Long value = 0L;
+                Reporter.addEvent(Reporter.STOPWATCH_READ, readSplit);
+
                 if(buffer != null) {
                     byte[] bytes = buffer.array();
                     for (int i = buffer.position(); i < bytes.length ;i++) {
@@ -125,12 +121,12 @@ public class ConsistencyBScenario extends Scenario {
                         }
                     }
                 }
-	            readValues.add(v);
-	            tslog.debug("{}\t{}", new Object[] {System.nanoTime() - start, v == 0 ? 0 : v - start});
+	            readValues.add(value);
+	            tslog.debug("{}\t{}", new Object[] {System.nanoTime() - start, value == 0 ? 0 : value - start});
             }
         }
         catch (Exception e){
-	        readValues.add(v);
+	        readValues.add(value);
 	        throw e;
         }
     }
