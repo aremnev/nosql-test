@@ -3,19 +3,14 @@ package net.thumbtack.research.nosql.scenarios;
 import net.thumbtack.research.nosql.Configurator;
 import net.thumbtack.research.nosql.ResearcherReport;
 import net.thumbtack.research.nosql.clients.Database;
-import net.thumbtack.research.nosql.utils.LongSerializer;
-import net.thumbtack.research.nosql.utils.StringSerializer;
-import org.apache.cassandra.thrift.NotFoundException;
 import org.javasimon.Split;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * User: vkornev
@@ -28,7 +23,7 @@ public class ConsistencyBScenario extends Scenario {
     private static final Logger log = LoggerFactory.getLogger(ConsistencyBScenario.class);
 
     private static String groupKey;
-    private static Queue<Long> groupReadValues;
+    private static List<Long> groupReadValues;
     private static int roleIdx = 0;
     private static int rolesCount = 0;
 
@@ -38,7 +33,7 @@ public class ConsistencyBScenario extends Scenario {
 
     private String key;
     private Role role;
-    private Queue<Long> readValues;
+    private List<Long> readValues;
 
     @Override
     public void init(Database database, Configurator config) {
@@ -51,7 +46,7 @@ public class ConsistencyBScenario extends Scenario {
             role = getRole();
             if (role.equals(Role.writer)) {
                 groupKey = UUID.randomUUID().toString();
-                groupReadValues = new ConcurrentLinkedQueue<>();
+                groupReadValues = new ArrayList<>();
             }
             key = groupKey;
             readValues = groupReadValues;
