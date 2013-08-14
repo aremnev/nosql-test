@@ -18,7 +18,7 @@ public class Configurator {
     private final ConcurrentMapConfiguration config;
 
     private final static String DB_NAME_PROPERTY = "db.name";
-    private final static String DB_HOST_PROPERTY = "db.host";
+    private final static String DB_HOST_PROPERTY = "db.hosts";
     private final static String DB_PORT_PROPERTY = "db.port";
     private final static String SC_NAME_PROPERTY = "sc.name";
     private final static String SC_THREADS_PROPERTY = "sc.threads";

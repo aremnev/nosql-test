@@ -85,7 +85,7 @@ public class Researcher {
 	    log.info("Shutting down clients...");
         threadPool.shutdown();
 
-	    log.info("--- Tests complete ---");
+        log.info("--- Tests complete ---");
 
 	    printReport();
     }

@@ -3,6 +3,9 @@ package net.thumbtack.research.nosql.scenarios;
 import net.thumbtack.research.nosql.Configurator;
 import net.thumbtack.research.nosql.ResearcherReport;
 import net.thumbtack.research.nosql.clients.Database;
+import net.thumbtack.research.nosql.utils.LongSerializer;
+import net.thumbtack.research.nosql.utils.StringSerializer;
+import org.javasimon.SimonManager;
 import org.javasimon.Split;
 import org.javasimon.Stopwatch;
 import org.slf4j.Logger;
@@ -17,6 +20,9 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class Scenario implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(Scenario.class);
+
+    protected static final StringSerializer ss = StringSerializer.get();
+    protected static final LongSerializer ls = LongSerializer.get();
 
     protected Database db;
     protected long writesCount;

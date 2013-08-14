@@ -148,9 +148,11 @@ public class CassandraClient implements Database {
                     parent,
                     readConsistencyLevel
             ).column.value;
+        }catch (NotFoundException e) {
+            log.debug(e.getMessage());
         } catch (TException e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
+            log.error(e.toString());
+            throw new RuntimeException(e);
         }
         return null;
     }

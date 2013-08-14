@@ -19,7 +19,6 @@ import java.util.UUID;
  */
 public class ConsistencyAScenario extends Scenario {
     private static final Logger log = LoggerFactory.getLogger(ConsistencyAScenario.class);
-    private static final StringSerializer ss = StringSerializer.get();
     private String key;
 
     @Override
