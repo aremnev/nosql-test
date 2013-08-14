@@ -1,7 +1,7 @@
 package net.thumbtack.research.nosql.scenarios;
 
 import net.thumbtack.research.nosql.Configurator;
-import net.thumbtack.research.nosql.Reporter;
+import net.thumbtack.research.nosql.report.Reporter;
 import net.thumbtack.research.nosql.clients.Database;
 import org.javasimon.Split;
 import org.slf4j.Logger;

@@ -2,6 +2,7 @@ package net.thumbtack.research.nosql;
 
 import net.thumbtack.research.nosql.clients.Database;
 import net.thumbtack.research.nosql.clients.DatabasePool;
+import net.thumbtack.research.nosql.report.AggregatedReporter;
 import net.thumbtack.research.nosql.scenarios.Scenario;
 import net.thumbtack.research.nosql.scenarios.ScenarioPool;
 import org.apache.commons.cli.*;
@@ -15,7 +16,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static net.thumbtack.research.nosql.Reporter.*;
+import static net.thumbtack.research.nosql.report.Reporter.*;
 
 /**
  * User: vkornev
@@ -106,7 +107,9 @@ public class Researcher {
     }
 
 	private static void printReport() {
-		log.info("Total time: {}ms", getTotal(STOPWATCH_SCENARIO));
+		AggregatedReporter.stop();
+
+        log.info("Total time: {}ms", getTotal(STOPWATCH_SCENARIO));
 		log.info("Total writes: " + getCount(STOPWATCH_WRITE));
 		log.info("Total failures: {} ({}%)",
 				new Object[] {

@@ -1,4 +1,4 @@
-package net.thumbtack.research.nosql;
+package net.thumbtack.research.nosql.report;
 
 import org.javasimon.SimonManager;
 import org.javasimon.Split;

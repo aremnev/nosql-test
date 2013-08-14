@@ -1,7 +1,8 @@
 package net.thumbtack.research.nosql.scenarios;
 
+import net.thumbtack.research.nosql.report.AggregatedReporter;
 import net.thumbtack.research.nosql.Configurator;
-import net.thumbtack.research.nosql.Reporter;
+import net.thumbtack.research.nosql.report.Reporter;
 import net.thumbtack.research.nosql.clients.Database;
 import org.javasimon.Split;
 import org.slf4j.Logger;
@@ -28,13 +29,14 @@ import java.util.*;
  */
 public class ConsistencyBScenario extends Scenario {
     private static final Logger log = LoggerFactory.getLogger(ConsistencyBScenario.class);
-	private static final Logger tslog = LoggerFactory.getLogger("timeseries");
 
     private static String groupKey;
     private static List<Long> groupReadValues;
     private static int roleIdx = 0;
     private static int rolesCount = 0;
-    private char delimeter = '\t';
+    private static final char DELIMETER = '\t';
+
+    private static long start = System.nanoTime();
 
     private enum Role {
         writer, reader;
@@ -43,7 +45,6 @@ public class ConsistencyBScenario extends Scenario {
     private String key;
     private Role role;
     private List<Long> readValues;
-	private long start;
 
     @Override
     public void init(Database database, Configurator config) {
@@ -62,7 +63,6 @@ public class ConsistencyBScenario extends Scenario {
             readValues = groupReadValues;
             log.debug("Create consistency_b scenario with role " + role.name() + " and key " + key);
         }
-	    start = System.nanoTime();
     }
 
     @Override
@@ -87,7 +87,8 @@ public class ConsistencyBScenario extends Scenario {
         for (long newTimestamp : readValues) {
             if (oldTimestamp > newTimestamp) {
                 Reporter.addEvent(Reporter.STOPWATCH_VALUE_FAILURE);
-	            Reporter.addEvent(Reporter.STOPWATCH_FAILURE);
+                Reporter.addEvent(Reporter.STOPWATCH_FAILURE);
+//                AggregatedReporter.addEvent(AggregatedReporter.EVENT_OLD_VALUE);
             }
             oldTimestamp = newTimestamp;
         }
@@ -105,7 +106,7 @@ public class ConsistencyBScenario extends Scenario {
 
     private void write() {
         Split writeSplit = Reporter.startEvent();
-        String prefix = System.nanoTime() + "" + delimeter;
+        String prefix = System.nanoTime() + "" + DELIMETER;
         String value = generateString(prefix);
         db.write(key, ss.toByteBuffer(value));
         Reporter.addEvent(Reporter.STOPWATCH_WRITE, writeSplit);
@@ -115,26 +116,27 @@ public class ConsistencyBScenario extends Scenario {
         Long value = 0L;
         try {
             synchronized (key) {
+                // read
                 Split readSplit = Reporter.startEvent();
+                Long now = System.nanoTime();
                 ByteBuffer buffer = db.read(key);
                 Reporter.addEvent(Reporter.STOPWATCH_READ, readSplit);
 
-                if(buffer != null) {
+                if (buffer != null) {
                     byte[] bytes = buffer.array();
-                    for (int i = buffer.position(); i < bytes.length ;i++) {
-                        if (bytes[i] == delimeter) {
+                    for (int i = buffer.position(); i < bytes.length; i++) {
+                        if (bytes[i] == DELIMETER) {
                             value = Long.valueOf(new String(Arrays.copyOfRange(bytes, buffer.position(), i)));
                             break;
                         }
                     }
                 }
-	            readValues.add(value);
-	            tslog.debug("{}\t{}", new Object[] {System.nanoTime() - start, value == 0 ? 0 : value - start});
+
+                readValues.add(value);
             }
-        }
-        catch (Exception e){
-	        readValues.add(value);
-	        throw e;
+        } catch (Exception e) {
+            readValues.add(value);
+            throw e;
         }
     }
 }
