@@ -59,7 +59,8 @@ public class AerospikeClientDB implements Database {
         try {
             client.put(writePolicy, createKey(key), new Bin(columnName, value.array()));
         } catch (AerospikeException e) {
-            e.printStackTrace();
+            log.error(e.toString());
+            throw new RuntimeException(e);
         }
     }
 

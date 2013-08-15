@@ -119,16 +119,19 @@ public final class CassandraClient implements Database {
         col.setTimestamp(System.currentTimeMillis());
 
         record.put(wrappedKey, mutationMap);
+        Exception exception = null;
         for (int i=0; i<10; i++) {
             try {
                 client.batch_mutate(record, writeConsistencyLevel);
             } catch (TTransportException e) {
                 e.printStackTrace();
                 log.error(e.getMessage() + " TTransportException.Type: " + e.getType());
+                exception = e;
                 continue;
             } catch (TException e) {
                 e.printStackTrace();
                 log.error(e.getMessage());
+                exception = e;
                 continue;
             }
             if(log.isDebugEnabled()) {
@@ -136,6 +139,7 @@ public final class CassandraClient implements Database {
             }
             return;
         }
+        throw new RuntimeException(exception);
     }
 
     @Override
