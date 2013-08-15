@@ -70,7 +70,8 @@ public class AerospikeClientDB implements Database {
             byte[] value = (byte[]) record.bins.get(columnName);
             return ByteBuffer.wrap(value);
         } catch (AerospikeException e) {
-            e.printStackTrace();
+            log.error(e.toString());
+            throw new RuntimeException(e);
         } catch (NullPointerException e) {
         }
         return null;
