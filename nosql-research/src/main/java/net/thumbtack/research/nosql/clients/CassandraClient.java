@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CassandraClient implements Database {
+public final class CassandraClient implements Database {
     private static final String DEFAULT_HOST = "localhost";
     private static final int DEFAULT_PORT = 9160;
     private static final String KEY_SPACE_PROPERTY = "cassandra.keySpace";

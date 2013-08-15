@@ -28,7 +28,7 @@ import static net.thumbtack.research.nosql.report.Reporter.*;
  *  -c,--config     -   config file name
  *  -h,--help       -   show help message
  */
-public class Researcher {
+public final class Researcher {
     private static final Logger log = LoggerFactory.getLogger(Researcher.class);
 
     private static final String CLI_CONFIG = "config";
