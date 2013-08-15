@@ -10,6 +10,7 @@ import java.util.Map;
  */
 public class DatabasePool {
     public static final String DB_CASSANDRA = "cassandra";
+    public static final String DB_AEROSPIKE = "aerospike";
 
     private static final DatabasePool instance = new DatabasePool();
     private final Map<String, Class<? extends Database>> databasePool;
@@ -18,6 +19,7 @@ public class DatabasePool {
     private DatabasePool() {
         databasePool = new HashMap<>();
         databasePool.put(DB_CASSANDRA, CassandraClient.class);
+        databasePool.put(DB_AEROSPIKE, AerospikeClientDB.class);
     }
 
     public static Database get(String databaseName) throws IllegalAccessException, InstantiationException {
