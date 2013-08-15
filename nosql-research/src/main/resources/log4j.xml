@@ -26,6 +26,15 @@
         </layout>
     </appender>
 
+    <appender name="rawFile" class="org.apache.log4j.FileAppender">
+        <param name="file" value="./raw.log" />
+        <param name="threshold" value="debug" />
+        <param name="append" value="false"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%m\n" />
+        </layout>
+    </appender>
+
     <logger name="timeseries" additivity="false">
         <level value="debug"/>
         <appender-ref ref="file" />
@@ -34,6 +43,11 @@
     <logger name="detailed" additivity="false">
         <level value="debug"/>
         <appender-ref ref="detailedFile" />
+    </logger>
+
+    <logger name="rawLog" additivity="false">
+        <level value="debug"/>
+        <appender-ref ref="rawFile" />
     </logger>
 
 	<root>

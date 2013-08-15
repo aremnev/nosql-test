@@ -31,13 +31,14 @@ import java.util.concurrent.Semaphore;
 public class ConsistencyBScenario extends Scenario {
     private static final Logger log = LoggerFactory.getLogger(ConsistencyBScenario.class);
     private static final Logger detailedLog = LoggerFactory.getLogger("detailed");
+    private static final Logger rawLog = LoggerFactory.getLogger("rawLog");
 
     private static int roleIdx = 0;
     private static int rolesCount = 0;
     private static int readersCount = 0;
     private static final char DELIMETER = '\t';
     private static String groupKey;
-    private static List<ByteBuffer> groupReadValues;
+    private static Map<Long, ByteBuffer> groupReadValues;
     private static Semaphore groupReadSemaphore;
     private static Semaphore groupAggrSemaphore;
 
@@ -47,7 +48,7 @@ public class ConsistencyBScenario extends Scenario {
 
     private String key;
     private Role role;
-    private List<ByteBuffer> readValues;
+    private Map<Long, ByteBuffer> readValues;
     private Semaphore readSemaphore;
     private Semaphore aggrSemaphore;
 
@@ -63,7 +64,7 @@ public class ConsistencyBScenario extends Scenario {
             role = getRole();
             if (role.equals(Role.writer)) {
                 groupKey = UUID.randomUUID().toString();
-                groupReadValues = new ArrayList<>();
+                groupReadValues = new LinkedHashMap<>();
                 groupReadSemaphore = new Semaphore(readersCount);
                 groupAggrSemaphore = new Semaphore(readersCount);
                 try {
@@ -134,8 +135,8 @@ public class ConsistencyBScenario extends Scenario {
         synchronized (key) {
             Split readSplit = Reporter.startEvent();
             ByteBuffer buffer = db.read(key);
+            readValues.put(System.nanoTime(), buffer);
             Reporter.addEvent(Reporter.STOPWATCH_READ, readSplit);
-            readValues.add(buffer);
         }
     }
 
@@ -143,27 +144,31 @@ public class ConsistencyBScenario extends Scenario {
         long oldTimestamp = 0;
         long old = -1;
         StringBuilder detailedString = new StringBuilder();
-        for (ByteBuffer buffer : readValues) {
-            long newTimestamp = getTimestamp(buffer);
+        for (Long time : readValues.keySet()) {
+            long value = getTimestamp(readValues.get(time));
             if (detailedLog.isDebugEnabled()) {
                 if (old == -1) {
-                    old = newTimestamp;
+                    old = value;
                 }
-                if (old == newTimestamp) {
+                if (old == value) {
                     detailedString.append("O ");
                 } else {
                     detailedString.append("N ");
                 }
             }
-            if (oldTimestamp > newTimestamp) {
+            if (oldTimestamp > value) {
                 Reporter.addEvent(Reporter.STOPWATCH_FAILURE);
                 AggregatedReporter.addEvent(AggregatedReporter.EVENT_OLD_VALUE);
             }
-            oldTimestamp = newTimestamp;
+            if (rawLog.isDebugEnabled()) {
+                rawLog.debug(key + "\t{}\t{}", time, value);
+            }
+            oldTimestamp = value;
         }
         if (detailedLog.isDebugEnabled()) {
             detailedLog.debug("{}\t{}", key, detailedString.toString());
         }
+
         readValues.clear();
     }
 
