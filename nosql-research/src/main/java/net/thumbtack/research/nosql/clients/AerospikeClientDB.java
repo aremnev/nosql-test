@@ -51,6 +51,8 @@ public class AerospikeClientDB implements Database {
             writePolicy.sleepBetweenRetries = DEFAULT_SLEEP_BETWEEN_RETRIES;
         } catch (AerospikeException e) {
             e.printStackTrace();
+            log.error(e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
@@ -74,6 +76,7 @@ public class AerospikeClientDB implements Database {
             log.error(e.toString());
             throw new RuntimeException(e);
         } catch (NullPointerException e) {
+            log.debug(e.getMessage());
         }
         return null;
     }
