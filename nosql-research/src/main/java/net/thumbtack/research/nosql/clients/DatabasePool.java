@@ -8,14 +8,13 @@ import java.util.Map;
  * Date: 12.08.13
  * Time: 19:23
  */
-public class DatabasePool {
+public final class DatabasePool {
     public static final String DB_CASSANDRA = "cassandra";
     public static final String DB_AEROSPIKE = "aerospike";
 
     private static final DatabasePool instance = new DatabasePool();
     private final Map<String, Class<? extends Database>> databasePool;
 
-    @SuppressWarnings("unchecked")
     private DatabasePool() {
         databasePool = new HashMap<>();
         databasePool.put(DB_CASSANDRA, CassandraClient.class);

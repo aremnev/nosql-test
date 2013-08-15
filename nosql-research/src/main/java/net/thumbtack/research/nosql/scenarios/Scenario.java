@@ -53,7 +53,7 @@ public abstract class Scenario implements Runnable {
 	                Reporter.addEvent(Reporter.STOPWATCH_ACTION, split);
                 } catch (Exception e) {
 	                Reporter.addEvent(Reporter.STOPWATCH_FAILURE);
-                    log.error(e.getMessage());
+                    log.error("Cause: {}; Stack trace: {}", e, e.getStackTrace());
                 }
             }
         }
