@@ -1,6 +1,5 @@
 package net.thumbtack.research.nosql.clients;
 
-import com.google.common.collect.Lists;
 import net.thumbtack.research.nosql.Configurator;
 import net.thumbtack.research.nosql.utils.StringSerializer;
 import org.apache.cassandra.locator.SimpleStrategy;
@@ -25,8 +24,6 @@ public final class CassandraClient implements Client {
     private static final String DEFAULT_KEY_SPACE = "key_space";
     private static final String COLUMN_FAMILY_PROPERTY = "cassandra.columnFamily";
     private static final String DEFAULT_COLUMN_FAMILY = "column_family";
-    private static final String COLUMN_NAME_PROPERTY = "cassandra.columnName";
-    private static final String DEFAULT_COLUMN_NAME = "column_name";
 
     private static final String READ_CONSISTENCY_LEVEL_PROPERTY = "cassandra.readConsistencyLevel";
     private static final String WRITE_CONSISTENCY_LEVEL_PROPERTY = "cassandra.writeConsistencyLevel";
@@ -49,8 +46,7 @@ public final class CassandraClient implements Client {
     private Cassandra.Client client;
     private TTransport transport;
 
-    private final Map<String, List<Mutation>> mutationMap = new HashMap<>();
-    private ColumnOrSuperColumn superColumn;
+    private Map<String, ColumnOrSuperColumn> superColumns;
 
     CassandraClient() {
     }
@@ -95,6 +91,8 @@ public final class CassandraClient implements Client {
             columnFamily = configurator.getString(COLUMN_FAMILY_PROPERTY, DEFAULT_COLUMN_FAMILY);
 
             client.truncate(columnFamily);
+
+            superColumns = new HashMap<>();
         } catch (TException e) {
             e.printStackTrace();
             log.error(e.getMessage());
@@ -104,19 +102,19 @@ public final class CassandraClient implements Client {
 
     @Override
     public void write(String key, Map<String, ByteBuffer> data) {
-
         Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<>();
+        Map<String, List<Mutation>> mutationMap = new HashMap<>();
+        List<Mutation> mutations = new ArrayList<>();
 
-        ByteBuffer wrappedKey = null;
+        ByteBuffer wrappedKey = ss.toByteBuffer(key);
 
         for (String columnName: data.keySet()) {
+            ColumnOrSuperColumn superColumn = getSuperColumn(columnName);
+            superColumn.column.setValue(data.get(columnName));
+            superColumn.column.setTimestamp(System.currentTimeMillis());
 
-            ColumnOrSuperColumn superColumn = getSuperColumn();
-            Column col = superColumn.column;
-            wrappedKey = ss.toByteBuffer(key);
-            col.setName(ss.toByteBuffer(columnName));
-            col.setValue(data.get(columnName));
-            col.setTimestamp(System.currentTimeMillis());
+            mutations.add(new Mutation().setColumn_or_supercolumn(superColumn));
+            mutationMap.put(columnFamily, mutations);
 
             record.put(wrappedKey, mutationMap);
         }
@@ -183,19 +181,16 @@ public final class CassandraClient implements Client {
         return def;
     }
 
-    private void initMutationMap() {
-        superColumn = new ColumnOrSuperColumn();
-        superColumn.setColumn(new Column());
-        List<Mutation> mutations = new ArrayList<>();
-        mutations.add(new Mutation().setColumn_or_supercolumn(superColumn));
-        mutationMap.put(columnFamily, mutations);
-    }
-
-    private ColumnOrSuperColumn getSuperColumn() {
-        if(superColumn == null) {
-            initMutationMap();
+    private ColumnOrSuperColumn getSuperColumn(String name) {
+        if(!superColumns.containsKey(name)) {
+            ColumnOrSuperColumn superColumn = new ColumnOrSuperColumn();
+            superColumn.setColumn(new Column());
+            Column col = superColumn.column;
+            col.setName(ss.toByteBuffer(name));
+            superColumns.put(name, superColumn);
+            return superColumn;
         }
-        return superColumn;
+        return superColumns.get(name);
     }
 
     private void setReplicationFactor(String keySpace, String replicationFactor) throws TException {

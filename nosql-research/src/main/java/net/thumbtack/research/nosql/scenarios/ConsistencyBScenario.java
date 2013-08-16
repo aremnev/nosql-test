@@ -39,7 +39,6 @@ public final class ConsistencyBScenario extends Scenario {
     private static int roleIdx = 0;
     private static int rolesCount = 0;
     private static int readersCount = 0;
-    private static final char DELIMITER = '\t';
     private static String groupKey;
     private static Map<Long, ByteBuffer> groupReadValues;
     private static Semaphore groupReadSemaphore;
@@ -76,15 +75,15 @@ public final class ConsistencyBScenario extends Scenario {
                 value = 0;
                 writeValues = new HashMap<>();
                 writeValues.put(DATA_COLUMN, ss.toByteBuffer(generateString()));
-                readColumns = new HashSet<>();
-                readColumns.add(VALE_COLUMN);
             }
             key = groupKey;
             readValues = groupReadValues;
             readSemaphore = groupReadSemaphore;
             aggrSemaphore = groupAggrSemaphore;
 
-            if (role.equals(Role.writer)) {
+            if (role.equals(Role.reader)) {
+                readColumns = new HashSet<>();
+                readColumns.add(VALE_COLUMN);
             }
 
             log.debug("Create consistency_b scenario with role " + role.name() + " and key " + key);
@@ -151,7 +150,11 @@ public final class ConsistencyBScenario extends Scenario {
         long oldTimestamp = 0;
         long firstValue = 0;
         for (Long time : readValues.keySet()) {
-            long value = getTimestamp(readValues.get(time));
+            long value = 0L;
+            ByteBuffer buffer = readValues.get(time);
+            if (buffer != null) {
+                value = ls.fromByteBuffer(readValues.get(time));
+            }
             if (oldTimestamp == 0) {
                 oldTimestamp = value;
                 firstValue = value;
@@ -181,15 +184,4 @@ public final class ConsistencyBScenario extends Scenario {
         readValues.clear();
     }
 
-    private long getTimestamp(ByteBuffer buffer) {
-        if (buffer != null) {
-            byte[] bytes = buffer.array();
-            for (int i = buffer.position(); i < bytes.length; i++) {
-                if (bytes[i] == DELIMITER) {
-                    return Long.valueOf(new String(Arrays.copyOfRange(bytes, buffer.position(), i)));
-                }
-            }
-        }
-        return 0L;
-    }
 }
