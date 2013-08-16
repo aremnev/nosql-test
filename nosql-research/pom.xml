@@ -4,6 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <repositories>
+        <repository>
+            <id>nosql-research-repo</id>
+            <url>file://${project.basedir}/lib</url>
+        </repository>
+    </repositories>
+
     <groupId>net.thumbtack.research</groupId>
     <artifactId>nosql-research</artifactId>
     <version>1.0-SNAPSHOT</version>
@@ -45,8 +52,6 @@
           <groupId>com.aerospike</groupId>
           <artifactId>aerospike-client</artifactId>
           <version>3.0.6</version>
-          <scope>system</scope>
-          <systemPath>${project.basedir}/lib/aerospike-client-3.0.6.jar</systemPath>
         </dependency>
     </dependencies>
 
@@ -80,6 +85,28 @@
                         <phase>package</phase>
                         <goals>
                             <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>hack-binary</id>
+                        <phase>validate</phase>
+                        <configuration>
+                            <file>${project.basedir}/lib/aerospike-client-3.0.6.jar</file>
+                            <repositoryLayout>default</repositoryLayout>
+                            <groupId>com.aerospike</groupId>
+                            <artifactId>aerospike-client</artifactId>
+                            <version>3.0.6</version>
+                            <packaging>jar</packaging>
+                            <generatePom>true</generatePom>
+                        </configuration>
+                        <goals>
+                            <goal>install-file</goal>
                         </goals>
                     </execution>
                 </executions>
