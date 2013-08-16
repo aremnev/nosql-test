@@ -34,7 +34,7 @@ public final class ConsistencyAScenario extends Scenario {
     public void init(Client client, Configurator config) {
         super.init(client, config);
         key = UUID.randomUUID().toString();
-        value = 0;
+        value = 0L;
     }
 
     @Override
@@ -54,9 +54,10 @@ public final class ConsistencyAScenario extends Scenario {
 	    Split readSplit = Reporter.startEvent();
 	    values = db.read(key, cn);
 	    Reporter.addEvent(Reporter.STOPWATCH_READ, readSplit);
-        long readValue = ls.fromByteBuffer(values.get("1"));
+        ByteBuffer buffer = values.get(VALE_COLUMN);
+        long readValue = buffer == null ? 0L : ls.fromByteBuffer(buffer);
         // compare
-	    if (value == readValue) {
+	    if (value != readValue) {
 	        Reporter.addEvent(Reporter.STOPWATCH_VALUE_FAILURE);
 	        Reporter.addEvent(Reporter.STOPWATCH_FAILURE);
             AggregatedReporter.addEvent(AggregatedReporter.EVENT_OLD_VALUE);
