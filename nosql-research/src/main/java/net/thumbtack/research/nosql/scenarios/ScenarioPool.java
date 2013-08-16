@@ -25,6 +25,9 @@ public final class ScenarioPool {
     }
 
     public static Scenario get(String scenarioName) throws IllegalAccessException, InstantiationException {
+        if (!instance.databasePool.containsKey(scenarioName)) {
+            throw new IllegalAccessException("Scenario " + scenarioName + " is not exist");
+        }
         return instance.databasePool.get(scenarioName).newInstance();
     }
 }

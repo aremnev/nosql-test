@@ -59,15 +59,19 @@ public final class ConsistencyBScenario extends Scenario {
 
     @Override
     public void init(Client client, Configurator config) {
+        log.debug("Init base scenario");
         super.init(client, config);
         synchronized (ConsistencyBScenario.class) {
+            log.debug("Init scenario consistency_b");
             if (rolesCount == 0) {
                 readersCount = config.getDbHosts().length;
                 rolesCount = readersCount + 1;
             }
             this.writesCount = config.getScWrites() / (config.getScThreads() / rolesCount);
+            log.debug("Writes by thread {}", this.writesCount);
             role = getRole();
             if (role.equals(Role.writer)) {
+                log.info("Init role writer");
                 groupKey = UUID.randomUUID().toString();
                 groupReadValues = new LinkedHashMap<>();
                 groupReadSemaphore = new Semaphore(0);
@@ -82,6 +86,7 @@ public final class ConsistencyBScenario extends Scenario {
             aggrSemaphore = groupAggrSemaphore;
 
             if (role.equals(Role.reader)) {
+                log.debug("Init role reader");
                 readColumns = new HashSet<>();
                 readColumns.add(VALE_COLUMN);
             }

@@ -22,6 +22,9 @@ public final class ClientPool {
     }
 
     public static Client get(String databaseName) throws IllegalAccessException, InstantiationException {
+        if (!instance.clientPool.containsKey(databaseName)) {
+            throw new IllegalAccessException("Client for database " + databaseName + " is not exist");
+        }
         return instance.clientPool.get(databaseName).newInstance();
     }
 }
