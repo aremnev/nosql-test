@@ -20,6 +20,7 @@ public class Configurator {
     private final static String DB_NAME_PROPERTY = "db.name";
     private final static String DB_HOST_PROPERTY = "db.hosts";
     private final static String DB_PORT_PROPERTY = "db.port";
+    private final static String DB_RETRIES_PROPERTY = "db.retries";
     private final static String SC_NAME_PROPERTY = "sc.name";
     private final static String SC_THREADS_PROPERTY = "sc.threads";
     private final static String SC_WRITES_PROPERTY = "sc.writes";
@@ -75,6 +76,10 @@ public class Configurator {
 
     public int getDbPort(int def) {
         return getInt(DB_PORT_PROPERTY, def);
+    }
+
+    public int getDbRetries(int def) {
+        return getInt(DB_RETRIES_PROPERTY, def);
     }
 
     public String getScName() {

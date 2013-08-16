@@ -1,13 +1,15 @@
 package net.thumbtack.research.nosql.scenarios;
 
 import net.thumbtack.research.nosql.Configurator;
+import net.thumbtack.research.nosql.clients.Client;
+import net.thumbtack.research.nosql.report.AggregatedReporter;
 import net.thumbtack.research.nosql.report.Reporter;
-import net.thumbtack.research.nosql.clients.Database;
 import org.javasimon.Split;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.UUID;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 /**
  * User: vkornev
@@ -19,37 +21,51 @@ import java.util.UUID;
  */
 public final class ConsistencyAScenario extends Scenario {
     private static final Logger log = LoggerFactory.getLogger(ConsistencyAScenario.class);
+    private static final Logger detailedLog = LoggerFactory.getLogger("detailed");
+    private static final Logger rawLog = LoggerFactory.getLogger("rawLog");
+
+    private static final String VALE_COLUMN = "1";
+    private static final String DATA_COLUMN = "2";
+
     private String key;
+    private long value;
 
     @Override
-    public void init(Database database, Configurator config) {
-        super.init(database, config);
+    public void init(Client client, Configurator config) {
+        super.init(client, config);
         key = UUID.randomUUID().toString();
+        value = 0;
     }
 
     @Override
     protected void action() throws Exception {
-        String writtenValue = generateString("");
+        Map<String, ByteBuffer> values = new HashMap<>();
+        values.put(VALE_COLUMN, ls.toByteBuffer(value));
+        values.put(DATA_COLUMN, ss.toByteBuffer(generateString()));
+        Set<String> cn = new HashSet<>(1);
+        cn.add(VALE_COLUMN);
 
 	    // write
 	    Split writeSplit = Reporter.startEvent();
-	    db.write(key, ss.toByteBuffer(writtenValue));
+	    db.write(key, values);
 	    Reporter.addEvent(Reporter.STOPWATCH_WRITE, writeSplit);
 
 	    // read
 	    Split readSplit = Reporter.startEvent();
-	    String readValue = ss.fromByteBuffer(db.read(key));
+	    values = db.read(key, cn);
 	    Reporter.addEvent(Reporter.STOPWATCH_READ, readSplit);
-
+        long readValue = ls.fromByteBuffer(values.get("1"));
         // compare
-	    if (!writtenValue.equals(readValue)) {
+	    if (value == readValue) {
 	        Reporter.addEvent(Reporter.STOPWATCH_VALUE_FAILURE);
 	        Reporter.addEvent(Reporter.STOPWATCH_FAILURE);
-	        log.warn("Written and read values for key {} are different", new Object[]{key});
-            if(log.isDebugEnabled()) {
-	            log.debug("Key: {}, Written: {}, Read: {} ", new Object [] { key, writtenValue, readValue } );
+            AggregatedReporter.addEvent(AggregatedReporter.EVENT_OLD_VALUE);
+	        detailedLog.warn("Written and read values for key {} are different", new Object[]{key});
+            if(rawLog.isDebugEnabled()) {
+	            rawLog.debug("Key: {}, Written: {}, Read: {} ", new Object [] { key, value, readValue } );
             }
         }
+        value++;
     }
 
     @Override

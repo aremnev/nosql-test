@@ -1,7 +1,7 @@
 package net.thumbtack.research.nosql;
 
-import net.thumbtack.research.nosql.clients.Database;
-import net.thumbtack.research.nosql.clients.DatabasePool;
+import net.thumbtack.research.nosql.clients.Client;
+import net.thumbtack.research.nosql.clients.ClientPool;
 import net.thumbtack.research.nosql.report.AggregatedReporter;
 import net.thumbtack.research.nosql.scenarios.Scenario;
 import net.thumbtack.research.nosql.scenarios.ScenarioPool;
@@ -49,13 +49,13 @@ public final class Researcher {
 
         AggregatedReporter.configure(config);
 
-        List<Database> dbs = new ArrayList<>(threadsCount);
-        Database db;
+        List<Client> dbs = new ArrayList<>(threadsCount);
+        Client db;
 
 	    log.info("Initializing {} clients...", threadsCount);
         for (int i=0; i < threadsCount; i++) {
             try {
-                db = DatabasePool.get(config.getDbName());
+                db = ClientPool.get(config.getDbName());
                 db.init(config);
                 dbs.add(db);
             } catch (Exception e) {
@@ -68,7 +68,7 @@ public final class Researcher {
         List<Scenario> scs = new ArrayList<>(threadsCount);
 	    log.info("Scheduling tests...");
 	    Split scenarioSplit = startEvent();
-        for (Database initDB : dbs) {
+        for (Client initDB : dbs) {
             try {
                 Scenario sc = ScenarioPool.get(config.getScName());
                 sc.init(initDB, config);

@@ -1,9 +1,9 @@
 package net.thumbtack.research.nosql.scenarios;
 
 import net.thumbtack.research.nosql.Configurator;
+import net.thumbtack.research.nosql.clients.Client;
 import net.thumbtack.research.nosql.report.AggregatedReporter;
 import net.thumbtack.research.nosql.report.Reporter;
-import net.thumbtack.research.nosql.clients.Database;
 import org.javasimon.Split;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +33,9 @@ public final class ConsistencyBScenario extends Scenario {
     private static final Logger detailedLog = LoggerFactory.getLogger("detailed");
     private static final Logger rawLog = LoggerFactory.getLogger("rawLog");
 
+    private static final String VALE_COLUMN = "1";
+    private static final String DATA_COLUMN = "2";
+
     private static int roleIdx = 0;
     private static int rolesCount = 0;
     private static int readersCount = 0;
@@ -48,13 +51,16 @@ public final class ConsistencyBScenario extends Scenario {
 
     private String key;
     private Role role;
+    private long value;
+    private Map<String, ByteBuffer> writeValues;
+    private Set<String> readColumns;
     private Map<Long, ByteBuffer> readValues;
     private Semaphore readSemaphore;
     private Semaphore aggrSemaphore;
 
     @Override
-    public void init(Database database, Configurator config) {
-        super.init(database, config);
+    public void init(Client client, Configurator config) {
+        super.init(client, config);
         synchronized (ConsistencyBScenario.class) {
             if (rolesCount == 0) {
                 readersCount = config.getDbHosts().length;
@@ -67,6 +73,11 @@ public final class ConsistencyBScenario extends Scenario {
                 groupReadValues = new LinkedHashMap<>();
                 groupReadSemaphore = new Semaphore(0);
                 groupAggrSemaphore = new Semaphore(0);
+                value = 0;
+                writeValues = new HashMap<>();
+                writeValues.put(DATA_COLUMN, ss.toByteBuffer(generateString()));
+                readColumns = new HashSet<>();
+                readColumns.add(VALE_COLUMN);
             }
             key = groupKey;
             readValues = groupReadValues;
@@ -118,18 +129,19 @@ public final class ConsistencyBScenario extends Scenario {
     }
 
     private void write() throws Exception {
+        writeValues.put(VALE_COLUMN, ls.toByteBuffer(value));
+
         Split writeSplit = Reporter.startEvent();
-        String prefix = System.nanoTime() + "" + DELIMITER;
-        String value = generateString(prefix);
-        db.write(key, ss.toByteBuffer(value));
+        db.write(key, writeValues);
         Reporter.addEvent(Reporter.STOPWATCH_WRITE, writeSplit);
+        value++;
     }
 
     private void read() throws Exception {
         synchronized (key) {
             Split readSplit = Reporter.startEvent();
-            ByteBuffer buffer = db.read(key);
-            readValues.put(System.nanoTime(), buffer);
+            Map<String, ByteBuffer> data = db.read(key, readColumns);
+            readValues.put(System.nanoTime(), data.get(VALE_COLUMN));
             Reporter.addEvent(Reporter.STOPWATCH_READ, readSplit);
         }
     }

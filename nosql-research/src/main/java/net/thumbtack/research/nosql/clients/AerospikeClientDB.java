@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 
-public class AerospikeClientDB implements Database {
+public class AerospikeClientDB implements Client {
     private static final String DEFAULT_HOST = "localhost";
     private static final int DEFAULT_PORT = 3000;
 

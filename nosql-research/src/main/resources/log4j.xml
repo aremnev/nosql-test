@@ -41,12 +41,12 @@
     </logger>
 
     <logger name="detailed" additivity="false">
-        <level value="debug"/>
+        <level value="no"/>
         <appender-ref ref="detailedFile" />
     </logger>
 
     <logger name="rawLog" additivity="false">
-        <level value="debug"/>
+        <level value="no"/>
         <appender-ref ref="rawFile" />
     </logger>
 

@@ -1,7 +1,7 @@
 package net.thumbtack.research.nosql.scenarios;
 
 import net.thumbtack.research.nosql.Configurator;
-import net.thumbtack.research.nosql.clients.Database;
+import net.thumbtack.research.nosql.clients.Client;
 import net.thumbtack.research.nosql.report.AggregatedReporter;
 import net.thumbtack.research.nosql.report.Reporter;
 import org.javasimon.Split;
@@ -33,6 +33,9 @@ public final class ConsistencyCScenario extends Scenario {
     private static final Logger rawLog = LoggerFactory.getLogger("rawLog");
     private static final String KEY_SET_SIZE_PROPERTY = "consistency_c.keySetSize";
 
+    private static final String VALE_COLUMN = "1";
+    private static final String DATA_COLUMN = "2";
+
     private static int roleIdx = 0;
     private static int rolesCount = 0;
     private static int readersCount = 0;
@@ -51,6 +54,9 @@ public final class ConsistencyCScenario extends Scenario {
     private String[] keys;
     private String[] readKey;
     private Role role;
+    private long value;
+    private Map<String, ByteBuffer> writeValues;
+    private Set<String> readColumns;
     private Map<Long, ByteBuffer> readValues;
     private Semaphore readSemaphore;
     private Semaphore aggrSemaphore;
@@ -58,8 +64,8 @@ public final class ConsistencyCScenario extends Scenario {
     private int keySetSize;
 
     @Override
-    public void init(Database database, Configurator config) {
-        super.init(database, config);
+    public void init(Client client, Configurator config) {
+        super.init(client, config);
         synchronized (ConsistencyCScenario.class) {
             keySetSize = config.getInt(KEY_SET_SIZE_PROPERTY, 1000);
             if (rolesCount == 0) {
@@ -76,6 +82,11 @@ public final class ConsistencyCScenario extends Scenario {
                 groupAggrSemaphore = new Semaphore(0);
                 groupRandomKeyIdx = new Random();
                 randomKeyIdx = new Random();
+                value = 0;
+                writeValues = new HashMap<>();
+                writeValues.put(DATA_COLUMN, ss.toByteBuffer(generateString()));
+                readColumns = new HashSet<>();
+                readColumns.add(VALE_COLUMN);
             } else {
                 randomKeyIdx = groupRandomKeyIdx;
             }
@@ -141,18 +152,18 @@ public final class ConsistencyCScenario extends Scenario {
     }
 
     private void write() throws Exception {
+        writeValues.put(VALE_COLUMN, ls.toByteBuffer(value));
         Split writeSplit = Reporter.startEvent();
-        String prefix = System.nanoTime() + "" + DELIMITER;
-        String value = generateString(prefix);
-        db.write(getNextKey(), ss.toByteBuffer(value));
+        db.write(getNextKey(), writeValues);
         Reporter.addEvent(Reporter.STOPWATCH_WRITE, writeSplit);
+        value++;
     }
 
     private void read() throws Exception {
         synchronized (getReadKey()) {
             Split readSplit = Reporter.startEvent();
-            ByteBuffer buffer = db.read(getReadKey());
-            readValues.put(System.nanoTime(), buffer);
+            Map<String, ByteBuffer> data = db.read(getReadKey(), readColumns);
+            readValues.put(System.nanoTime(), data.get(VALE_COLUMN));
             Reporter.addEvent(Reporter.STOPWATCH_READ, readSplit);
         }
     }
