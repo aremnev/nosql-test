@@ -14,8 +14,8 @@ import java.util.Set;
  * General interface for base method of NoSQL data bases
  */
 public interface Client {
-    void init(Configurator configurator);
-    void write(String key, Map<String, ByteBuffer> value);
-    Map<String, ByteBuffer> read(String key, Set<String> columnNames);
+    void init(Configurator configurator) throws ClientException;
+    void write(String key, Map<String, ByteBuffer> value) throws ClientException;
+    Map<String, ByteBuffer> read(String key, Set<String> columnNames) throws ClientException;
     void close() throws Exception;
 }

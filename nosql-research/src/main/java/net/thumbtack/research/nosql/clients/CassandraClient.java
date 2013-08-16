@@ -57,7 +57,7 @@ public final class CassandraClient implements Client {
     }
 
     @Override
-    public void init(Configurator configurator) {
+    public void init(Configurator configurator) throws ClientException {
         if(log.isDebugEnabled()) {
             log.debug("Configurator: " + configurator);
         }
@@ -96,12 +96,13 @@ public final class CassandraClient implements Client {
         } catch (TException e) {
             e.printStackTrace();
             log.error(e.getMessage());
-            throw new RuntimeException(e);
+            throw new ClientException(e);
         }
     }
 
     @Override
-    public void write(String key, Map<String, ByteBuffer> data) {
+    public void write(String key, Map<String, ByteBuffer> data) throws ClientException {
+
         Map<ByteBuffer, Map<String, List<Mutation>>> record = new HashMap<>();
         Map<String, List<Mutation>> mutationMap = new HashMap<>();
         List<Mutation> mutations = new ArrayList<>();
@@ -140,11 +141,11 @@ public final class CassandraClient implements Client {
             }
             return;
         }
-        throw new RuntimeException(exception);
+        throw new ClientException(exception);
     }
 
     @Override
-    public Map<String, ByteBuffer> read(String key, Set<String> columnNames) {
+    public Map<String, ByteBuffer> read(String key, Set<String> columnNames) throws ClientException {
         Map<String, ByteBuffer> result = new HashMap<>();
         ColumnParent parent = new ColumnParent(columnFamily);
         List<ByteBuffer> wrapperColumnNames = new ArrayList<>();
@@ -168,9 +169,9 @@ public final class CassandraClient implements Client {
             log.debug(e.getMessage());
         } catch (TException e) {
             log.error(e.toString());
-            throw new RuntimeException(e);
+            throw new ClientException(e);
         }
-        return null;
+        return result;
     }
 
     private ConsistencyLevel getConsistencyLevel(Configurator configurator, String name, ConsistencyLevel def) {

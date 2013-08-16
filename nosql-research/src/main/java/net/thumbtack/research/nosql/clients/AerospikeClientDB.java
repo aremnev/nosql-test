@@ -9,6 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class AerospikeClientDB implements Client {
     private static final String DEFAULT_HOST = "localhost";
@@ -22,8 +25,6 @@ public class AerospikeClientDB implements Client {
     private static final String DEFAULT_NAMESPACE = "test";
     private static final String SET_NAME_PROPERTY = "aerospike.setName";
     private static final String DEFAULT_SET_NAME = "test";
-    private static final String COLUMN_NAME_PROPERTY = "aerospike.columnName";
-    private static final String DEFAULT_COLUMN_NAME = "column_name";
 
     private static final Logger log = LoggerFactory.getLogger(AerospikeClientDB.class);
 
@@ -31,10 +32,9 @@ public class AerospikeClientDB implements Client {
     private String nameSpace;
     private String setName;
     private WritePolicy writePolicy;
-    private String columnName;
 
     @Override
-    public void init(Configurator configurator) {
+    public void init(Configurator configurator) throws ClientException {
         try {
             client = new AerospikeClient(
                     new ClientPolicy(),
@@ -43,42 +43,55 @@ public class AerospikeClientDB implements Client {
             );
             nameSpace = configurator.getString(NAMESPACE_PROPERTY, DEFAULT_NAMESPACE);
             setName = configurator.getString(SET_NAME_PROPERTY, DEFAULT_SET_NAME);
-            columnName = configurator.getString(COLUMN_NAME_PROPERTY, DEFAULT_COLUMN_NAME);
 
             writePolicy = new WritePolicy();
             writePolicy.timeout = DEFAULT_TIMEOUT;
-            writePolicy.maxRetries = DEFAULT_RETRIES;
+            writePolicy.maxRetries = configurator.getDbRetries(DEFAULT_RETRIES);
             writePolicy.sleepBetweenRetries = DEFAULT_SLEEP_BETWEEN_RETRIES;
         } catch (AerospikeException e) {
             e.printStackTrace();
             log.error(e.getMessage());
-            throw new RuntimeException(e);
+            throw new ClientException(e);
         }
     }
 
     @Override
-    public void write(String key, ByteBuffer value) {
+    public void write(String key, Map<String, ByteBuffer> data) throws ClientException {
         try {
-            client.put(writePolicy, createKey(key), new Bin(columnName, value.array()));
+            Bin[] bins = new Bin[data.size()];
+            int i = 0;
+            for (String name : data.keySet()) {
+                bins[i] =  new Bin(name, data.get(name).array());
+                i++;
+            }
+            client.put(writePolicy, createKey(key), bins);
         } catch (AerospikeException e) {
             log.error(e.toString());
-            throw new RuntimeException(e);
+            throw new ClientException(e);
         }
     }
 
     @Override
-    public ByteBuffer read(String key) {
+    public Map<String, ByteBuffer> read(String key, Set<String> columnNames) throws ClientException {
+        Map<String, ByteBuffer> result = new HashMap<>();
         try {
-            Record record = client.get(writePolicy, createKey(key));
-            byte[] value = (byte[]) record.bins.get(columnName);
-            return ByteBuffer.wrap(value);
+            Record record;
+            if(columnNames == null || columnNames.isEmpty()) {
+               record = client.get(writePolicy, createKey(key));
+            } else {
+                record = client.get(writePolicy, createKey(key), columnNames.toArray(new String[columnNames.size()]));
+            }
+            for(String name : record.bins.keySet()) {
+                result.put(name, ByteBuffer.wrap((byte[])record.bins.get(name)));
+            }
+            return result;
         } catch (AerospikeException e) {
             log.error(e.toString());
-            throw new RuntimeException(e);
+            throw new ClientException(e);
         } catch (NullPointerException e) {
             log.debug(e.getMessage());
         }
-        return null;
+        return result;
     }
 
     @Override
