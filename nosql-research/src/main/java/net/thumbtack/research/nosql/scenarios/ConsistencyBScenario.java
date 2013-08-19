@@ -147,6 +147,7 @@ public final class ConsistencyBScenario extends Scenario {
             Map<String, ByteBuffer> data = db.read(key, readColumns);
             readValues.put(System.nanoTime(), data.get(VALE_COLUMN));
             Reporter.addEvent(Reporter.STOPWATCH_READ, readSplit);
+            Reporter.addEvent(Reporter.STOPWATCH_READ_TIME_SERIES, readSplit);
         }
     }
 

@@ -113,6 +113,7 @@ public final class Researcher {
 
         log.info("Total time: {}ms", getTotal(STOPWATCH_SCENARIO));
 		log.info("Total writes: " + getCount(STOPWATCH_WRITE));
+		log.info("Total reads: " + getCount(STOPWATCH_READ));
 		log.info("Total failures: {} ({}%)",
 				new Object[] {
 						getCount(STOPWATCH_FAILURE),

@@ -2,9 +2,6 @@ package net.thumbtack.research.nosql.report;
 
 import org.javasimon.SimonManager;
 import org.javasimon.Split;
-import org.javasimon.Stopwatch;
-
-import java.util.HashMap;
 
 /**
  * Used to track test events and timings
@@ -16,6 +13,7 @@ public class Reporter {
 	public static final String STOPWATCH_SCENARIO = "scenario";
 	public static final String STOPWATCH_ACTION = "action";
 	public static final String STOPWATCH_READ = "read";
+	public static final String STOPWATCH_READ_TIME_SERIES = "read_time_series";
 	public static final String STOPWATCH_WRITE = "write";
 	public static final String STOPWATCH_FAILURE = "failure";
 	public static final String STOPWATCH_VALUE_FAILURE = "valueFailure";
@@ -37,6 +35,10 @@ public class Reporter {
 	public static long getCount(final String stopwatch) {
 		return SimonManager.getStopwatch(stopwatch).getCounter();
 	}
+
+    public static void reset(final String stopwatch) {
+        SimonManager.getStopwatch(stopwatch).reset();
+    }
 
 	public static double getTotal(final String stopwatch) {
 		return (double)SimonManager.getStopwatch(stopwatch).getTotal() / NANOS_IN_MILLI;
