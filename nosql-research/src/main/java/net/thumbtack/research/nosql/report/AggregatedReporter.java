@@ -40,10 +40,9 @@ public class AggregatedReporter {
             addEvent(EVENT_OLD_VALUE, new FlushEvent<Event>() {
                 public void flush(Collection<Event> buffer) {
                     long count = Reporter.getCount(Reporter.STOPWATCH_READ_TIME_SERIES);
-                    double percent = count != 0 ? (buffer.size() * 100 / count) : 0;
 
                     Reporter.reset(Reporter.STOPWATCH_READ_TIME_SERIES);
-                    tslog.debug("{}\t{}\t{}", new Object[]{System.nanoTime(), buffer.size(), percent});
+                    tslog.debug("{}\t{}\t{}", new Object[]{System.nanoTime(), buffer.size(), count});
                 }
             });
         }};
