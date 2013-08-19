@@ -6,8 +6,8 @@
 
     <repositories>
         <repository>
-            <id>nosql-research-repo</id>
-            <url>file://${project.basedir}/lib</url>
+            <id>local</id>
+            <url>file://${basedir}/libs</url>
         </repository>
     </repositories>
 
@@ -85,28 +85,6 @@
                         <phase>package</phase>
                         <goals>
                             <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-install-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>hack-binary</id>
-                        <phase>validate</phase>
-                        <configuration>
-                            <file>${project.basedir}/lib/aerospike-client-3.0.6.jar</file>
-                            <repositoryLayout>default</repositoryLayout>
-                            <groupId>com.aerospike</groupId>
-                            <artifactId>aerospike-client</artifactId>
-                            <version>3.0.6</version>
-                            <packaging>jar</packaging>
-                            <generatePom>true</generatePom>
-                        </configuration>
-                        <goals>
-                            <goal>install-file</goal>
                         </goals>
                     </execution>
                 </executions>
