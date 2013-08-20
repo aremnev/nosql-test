@@ -33,6 +33,9 @@ public final class ConsistencyBScenario extends Scenario {
     private static final Logger detailedLog = LoggerFactory.getLogger("detailed");
     private static final Logger rawLog = LoggerFactory.getLogger("rawLog");
     private static final String READ_TRIES_PROPERTY = "consistency_b.readTries";
+    private static final int DEFAULT_READ_TRIES = 2;
+    private static final String WRITE_DELAY_PROPERTY = "consistency_b.writeDelay";
+    private static final int DEFAULT_WRITE_DELAY = 0;
 
     private static final String VALE_COLUMN = "1";
     private static final String DATA_COLUMN = "2";
@@ -58,6 +61,7 @@ public final class ConsistencyBScenario extends Scenario {
     private Semaphore readSemaphore;
     private Semaphore aggrSemaphore;
     private int readTries;
+    private int writeDelay;
 
     @Override
     public void init(Client client, Configurator config) {
@@ -81,6 +85,7 @@ public final class ConsistencyBScenario extends Scenario {
                 value = 0;
                 writeValues = new HashMap<>();
                 writeValues.put(DATA_COLUMN, ss.toByteBuffer(generateString()));
+                writeDelay = config.getInt(WRITE_DELAY_PROPERTY, DEFAULT_WRITE_DELAY);
             }
             key = groupKey;
             readValues = groupReadValues;
@@ -91,7 +96,7 @@ public final class ConsistencyBScenario extends Scenario {
                 log.debug("Init role reader");
                 readColumns = new HashSet<>();
                 readColumns.add(VALE_COLUMN);
-                readTries = config.getInt(READ_TRIES_PROPERTY, 1);
+                readTries = config.getInt(READ_TRIES_PROPERTY, DEFAULT_READ_TRIES);
             }
 
             log.debug("Create consistency_b scenario with role " + role.name() + " and key " + key);
@@ -102,6 +107,7 @@ public final class ConsistencyBScenario extends Scenario {
     protected void action() throws Exception {
         if (role.equals(Role.writer)) {
             readSemaphore.release(readersCount);
+            Thread.sleep(writeDelay);
             write();
             aggrSemaphore.acquire(readersCount);
             aggregation();
@@ -109,7 +115,7 @@ public final class ConsistencyBScenario extends Scenario {
             readSemaphore.acquire(1);
             for (int i=0; i<readTries; i++) {
                 read();
-                Thread.sleep(0, 100);
+                Thread.yield();
             }
             aggrSemaphore.release(1);
         }
