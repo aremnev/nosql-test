@@ -39,6 +39,7 @@ public class AggregatedReporter {
     private static BatchUpdater<Event> eventUpdater;
 
     public static void configure(Configurator config) {
+        tslog.debug("Time\tWrites\tReads\tErrors\tErrors on slow\tRead avg\tWrite avg");
         eventUpdater = new BatchUpdater<Event>("aggregated-event", BUFFER_SIZE, config.getReportFlushInterval()) {{
             addEvent(EVENT_OLD_VALUE, new FlushEvent<Event>() {
                 public void flush(Collection<Event> buffer) {
