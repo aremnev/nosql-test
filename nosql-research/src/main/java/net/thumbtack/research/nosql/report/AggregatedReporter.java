@@ -56,7 +56,7 @@ public class AggregatedReporter {
                         }
                     }
 
-                    tslog.debug("{}\t{}\t{}\t{}\t{}\t{}", new Object[]{
+                    tslog.debug("{}\t{}\t{}\t{}\t{}\t{}\t{}", new Object[]{
                             System.nanoTime(),
                             writeCount,
                             readCount,
