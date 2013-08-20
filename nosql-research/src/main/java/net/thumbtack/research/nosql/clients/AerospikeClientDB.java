@@ -33,12 +33,16 @@ public class AerospikeClientDB implements Client {
     private String setName;
     private WritePolicy writePolicy;
 
+    private boolean slow;
+
     @Override
     public void init(Configurator configurator) throws ClientException {
         try {
+            String host = configurator.getNextDbHost(DEFAULT_HOST);
+            slow = configurator.isSlow(host);
             client = new AerospikeClient(
                     new ClientPolicy(),
-                    configurator.getNextDbHost(DEFAULT_HOST),
+                    host,
                     configurator.getDbPort(DEFAULT_PORT)
             );
             nameSpace = configurator.getString(NAMESPACE_PROPERTY, DEFAULT_NAMESPACE);
@@ -101,5 +105,10 @@ public class AerospikeClientDB implements Client {
 
     private Key createKey(String key) throws AerospikeException {
         return new Key(nameSpace, setName, key);
+    }
+
+    @Override
+    public boolean isSlow() {
+        return slow;
     }
 }

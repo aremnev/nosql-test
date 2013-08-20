@@ -10,10 +10,12 @@ import java.util.Collection;
  * Event to be registered/aggregated
  */
 class Event {
+    boolean unique;
     private long mark;
 
-    Event(long v) {
+    Event(long v, boolean unique) {
         this.mark = v;
+        this.unique = unique;
     }
 
     public int hashCode() {
@@ -21,7 +23,8 @@ class Event {
     }
 
     public boolean equals(Object o) {
-        return ((Event)o).mark == this.mark;
+        return ((Event)o).mark == this.mark
+                && unique == this.unique;
     }
 }
 
@@ -45,21 +48,30 @@ public class AggregatedReporter {
                     double writeMean = Reporter.getMean(Reporter.STOPWATCH_WRITE_TIME_SERIES);
                     Reporter.reset(Reporter.STOPWATCH_READ_TIME_SERIES);
                     Reporter.reset(Reporter.STOPWATCH_WRITE_TIME_SERIES);
+
+                    long unique = 0L;
+                    for (Event e: buffer) {
+                        if (e.unique) {
+                            unique++;
+                        }
+                    }
+
                     tslog.debug("{}\t{}\t{}\t{}\t{}\t{}", new Object[]{
                             System.nanoTime(),
-                            readCount,
-                            readMean,
                             writeCount,
-                            writeMean,
-                            buffer.size()
+                            readCount,
+                            buffer.size(),
+                            unique,
+                            String.format("%.2f", readMean),
+                            String.format("%.2f", writeMean)
                     });
                 }
             });
         }};
     }
 
-    public static void addEvent(int type) {
-        Event event = new Event(System.nanoTime());
+    public static void addEvent(int type, boolean unique) {
+        Event event = new Event(System.nanoTime(), unique);
         eventUpdater.add(type, event);
     }
 

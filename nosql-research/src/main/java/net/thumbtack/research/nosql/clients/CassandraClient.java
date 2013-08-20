@@ -48,6 +48,8 @@ public final class CassandraClient implements Client {
 
     private Map<String, ColumnOrSuperColumn> superColumns;
 
+    private boolean slow;
+
     CassandraClient() {
     }
 
@@ -63,6 +65,7 @@ public final class CassandraClient implements Client {
         }
         try {
             String host = configurator.getNextDbHost(DEFAULT_HOST);
+            slow = configurator.isSlow(host);
             int port = configurator.getDbPort(DEFAULT_PORT);
             retries = configurator.getDbRetries(DEFAULT_RETRIES);
             log.debug("Client initialization: " + host + ":" + port);
@@ -212,5 +215,10 @@ public final class CassandraClient implements Client {
             ksDef.setStrategy_options(strategyOptions);
             client.system_add_keyspace(ksDef);
         }
+    }
+
+    @Override
+    public boolean isSlow() {
+        return slow;
     }
 }

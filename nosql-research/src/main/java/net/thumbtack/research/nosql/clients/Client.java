@@ -18,4 +18,5 @@ public interface Client {
     void write(String key, Map<String, ByteBuffer> value) throws ClientException;
     Map<String, ByteBuffer> read(String key, Set<String> columnNames) throws ClientException;
     void close() throws Exception;
+    boolean isSlow();
 }

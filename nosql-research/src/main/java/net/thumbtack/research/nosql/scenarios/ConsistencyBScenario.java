@@ -170,7 +170,7 @@ public final class ConsistencyBScenario extends Scenario {
             }
             if (oldTimestamp > value) {
                 Reporter.addEvent(Reporter.STOPWATCH_FAILURE);
-                AggregatedReporter.addEvent(AggregatedReporter.EVENT_OLD_VALUE);
+                AggregatedReporter.addEvent(AggregatedReporter.EVENT_OLD_VALUE, db.isSlow());
             }
             if (detailedLog.isDebugEnabled()) {
                 if (firstValue == value) {

@@ -60,7 +60,7 @@ public final class ConsistencyAScenario extends Scenario {
 	    if (value != readValue) {
 	        Reporter.addEvent(Reporter.STOPWATCH_VALUE_FAILURE);
 	        Reporter.addEvent(Reporter.STOPWATCH_FAILURE);
-            AggregatedReporter.addEvent(AggregatedReporter.EVENT_OLD_VALUE);
+            AggregatedReporter.addEvent(AggregatedReporter.EVENT_OLD_VALUE, db.isSlow());
 	        detailedLog.warn("Written and read values for key {} are different", new Object[]{key});
             if(rawLog.isDebugEnabled()) {
 	            rawLog.debug("Key: {}, Written: {}, Read: {} ", new Object [] { key, value, readValue } );

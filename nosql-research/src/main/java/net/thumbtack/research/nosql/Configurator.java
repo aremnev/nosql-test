@@ -21,12 +21,14 @@ public class Configurator {
     private final static String DB_HOST_PROPERTY = "db.hosts";
     private final static String DB_PORT_PROPERTY = "db.port";
     private final static String DB_RETRIES_PROPERTY = "db.retries";
+    private final static String DB_SLOW = "db.slow";
     private final static String SC_NAME_PROPERTY = "sc.name";
     private final static String SC_THREADS_PROPERTY = "sc.threads";
     private final static String SC_WRITES_PROPERTY = "sc.writes";
     private final static String SC_STRING_SIZE_PROPERTY = "sc.stringSize";
     private final static String REPORT_FLUSH_INTERVAL_PROPERTY = "report.flushInterval";
     private String[] hosts;
+    private String slow;
     private int hostsIdx = -1;
 
     public Configurator(String fileName) {
@@ -72,6 +74,16 @@ public class Configurator {
             hostsIdx = 0;
         }
         return hosts[hostsIdx];
+    }
+
+    public boolean isSlow(String host) {
+        if(slow == null) {
+            slow = config.getString(DB_SLOW, "");
+        }
+        if(host == null || host.equals("")) {
+            return false;
+        }
+        return host.equals(slow);
     }
 
     public int getDbPort(int def) {
