@@ -32,6 +32,7 @@ public final class ConsistencyBScenario extends Scenario {
     private static final Logger log = LoggerFactory.getLogger(ConsistencyBScenario.class);
     private static final Logger detailedLog = LoggerFactory.getLogger("detailed");
     private static final Logger rawLog = LoggerFactory.getLogger("rawLog");
+    private static final String READ_TRIES_PROPERTY = "consistency_b.readTries";
 
     private static final String VALE_COLUMN = "1";
     private static final String DATA_COLUMN = "2";
@@ -56,6 +57,7 @@ public final class ConsistencyBScenario extends Scenario {
     private Map<Long, ByteBuffer> readValues;
     private Semaphore readSemaphore;
     private Semaphore aggrSemaphore;
+    private int readTries;
 
     @Override
     public void init(Client client, Configurator config) {
@@ -71,7 +73,7 @@ public final class ConsistencyBScenario extends Scenario {
             log.debug("Writes by thread {}", this.writesCount);
             role = getRole();
             if (role.equals(Role.writer)) {
-                log.info("Init role writer");
+                log.debug("Init role writer");
                 groupKey = UUID.randomUUID().toString();
                 groupReadValues = new LinkedHashMap<>();
                 groupReadSemaphore = new Semaphore(0);
@@ -89,6 +91,7 @@ public final class ConsistencyBScenario extends Scenario {
                 log.debug("Init role reader");
                 readColumns = new HashSet<>();
                 readColumns.add(VALE_COLUMN);
+                readTries = config.getInt(READ_TRIES_PROPERTY, 1);
             }
 
             log.debug("Create consistency_b scenario with role " + role.name() + " and key " + key);
@@ -104,9 +107,10 @@ public final class ConsistencyBScenario extends Scenario {
             aggregation();
         } else {
             readSemaphore.acquire(1);
-            read();
-            read();
-            read();
+            for (int i=0; i<readTries; i++) {
+                read();
+                Thread.sleep(0, 100);
+            }
             aggrSemaphore.release(1);
         }
     }

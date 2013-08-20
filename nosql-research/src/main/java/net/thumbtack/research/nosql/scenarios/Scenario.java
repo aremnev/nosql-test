@@ -6,7 +6,6 @@ import net.thumbtack.research.nosql.report.Reporter;
 import net.thumbtack.research.nosql.utils.LongSerializer;
 import net.thumbtack.research.nosql.utils.StringSerializer;
 import org.javasimon.Split;
-import org.javasimon.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +29,6 @@ public abstract class Scenario implements Runnable {
     protected boolean isRunning = false;
     protected Configurator config;
 
-	protected Stopwatch actionStopwatch;
     private long stringSize;
 
     public void init(Client client, Configurator config) {
@@ -67,7 +65,7 @@ public abstract class Scenario implements Runnable {
         isRunning = false;
     }
 
-    public String generateString() {
+    public final String generateString() {
         char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
         StringBuilder sb = new StringBuilder();
         Random random = new Random();

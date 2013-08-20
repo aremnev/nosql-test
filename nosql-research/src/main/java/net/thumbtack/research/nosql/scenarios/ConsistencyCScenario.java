@@ -41,6 +41,8 @@ public final class ConsistencyCScenario extends Scenario {
     private static int readersCount = 0;
     private static String[] groupKeys;
     private static String[] groupReadKey;
+    private static boolean[] groupIsWritting;
+
     private static Map<Long, ByteBuffer> groupReadValues;
     private static Semaphore groupReadSemaphore;
     private static Semaphore groupAggrSemaphore;
@@ -52,6 +54,7 @@ public final class ConsistencyCScenario extends Scenario {
 
     private String[] keys;
     private String[] readKey;
+    private boolean[] isWriting;
     private Role role;
     private long value;
     private Map<String, ByteBuffer> writeValues;
@@ -71,11 +74,12 @@ public final class ConsistencyCScenario extends Scenario {
                 readersCount = config.getDbHosts().length;
                 rolesCount = readersCount + 2;
             }
-            this.writesCount = config.getScWrites() / (config.getScThreads() / rolesCount);
             role = getRole();
             if (role.equals(Role.writer)) {
+                this.writesCount = config.getScWrites() / (config.getScThreads() / rolesCount);
                 groupKeys = createKeys();
                 groupReadKey = new String[1];
+                groupIsWritting = new boolean[1];
                 groupReadValues = new LinkedHashMap<>();
                 groupReadSemaphore = new Semaphore(readersCount);
                 groupAggrSemaphore = new Semaphore(0);
@@ -86,12 +90,15 @@ public final class ConsistencyCScenario extends Scenario {
                 writeValues.put(DATA_COLUMN, ss.toByteBuffer(generateString()));
             } else {
                 randomKeyIdx = groupRandomKeyIdx;
+                writesCount = Long.MAX_VALUE;
             }
             keys = groupKeys;
             readKey = groupReadKey;
+            isWriting = groupIsWritting;
             readValues = groupReadValues;
             readSemaphore = groupReadSemaphore;
             aggrSemaphore = groupAggrSemaphore;
+            setWriting(true);
 
             if (role.equals(Role.aggregator)) {
                 setReadKey(getNextKey());
@@ -126,6 +133,9 @@ public final class ConsistencyCScenario extends Scenario {
                 break;
             }
         }
+        if (!isWriting()) {
+            close();
+        }
     }
 
     @Override
@@ -136,6 +146,9 @@ public final class ConsistencyCScenario extends Scenario {
         } catch (Exception e) {
             e.printStackTrace();
             log.error(e.getMessage());
+        }
+        if (role.equals(Role.writer)) {
+            setWriting(false);
         }
     }
 
@@ -227,5 +240,13 @@ public final class ConsistencyCScenario extends Scenario {
 
     private void setReadKey(String k) {
         readKey[0] = k;
+    }
+
+    public boolean isWriting() {
+        return isWriting[0];
+    }
+
+    public void setWriting(boolean writing) {
+        isWriting[0] = writing;
     }
 }
