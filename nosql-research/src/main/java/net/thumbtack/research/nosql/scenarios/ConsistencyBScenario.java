@@ -107,6 +107,7 @@ public final class ConsistencyBScenario extends Scenario {
     protected void action() throws Exception {
         if (role.equals(Role.writer)) {
             readSemaphore.release(readersCount);
+            Thread.sleep(writeDelay);
             write();
             aggrSemaphore.acquire(readersCount);
             aggregation();
