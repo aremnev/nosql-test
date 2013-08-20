@@ -75,4 +75,14 @@ public abstract class Scenario implements Runnable {
         }
         return sb.toString();
     }
+
+    protected void onRead(Split readSplit) {
+        Reporter.addEvent(Reporter.STOPWATCH_READ, readSplit);
+        Reporter.addEvent(Reporter.STOPWATCH_READ_TIME_SERIES, readSplit);
+    }
+
+    protected void onWrite(Split writeSplit) {
+        Reporter.addEvent(Reporter.STOPWATCH_WRITE, writeSplit);
+        Reporter.addEvent(Reporter.STOPWATCH_WRITE_TIME_SERIES, writeSplit);
+    }
 }

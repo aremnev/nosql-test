@@ -48,13 +48,12 @@ public final class ConsistencyAScenario extends Scenario {
 	    // write
 	    Split writeSplit = Reporter.startEvent();
 	    db.write(key, values);
-	    Reporter.addEvent(Reporter.STOPWATCH_WRITE, writeSplit);
+        onWrite(writeSplit);
 
 	    // read
 	    Split readSplit = Reporter.startEvent();
 	    values = db.read(key, cn);
-	    Reporter.addEvent(Reporter.STOPWATCH_READ, readSplit);
-        Reporter.addEvent(Reporter.STOPWATCH_READ_TIME_SERIES, readSplit);
+	    onRead(readSplit);
         ByteBuffer buffer = values.get(VALE_COLUMN);
         long readValue = buffer == null ? 0L : ls.fromByteBuffer(buffer);
         // compare

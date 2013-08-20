@@ -141,7 +141,7 @@ public final class ConsistencyBScenario extends Scenario {
 
         Split writeSplit = Reporter.startEvent();
         db.write(key, writeValues);
-        Reporter.addEvent(Reporter.STOPWATCH_WRITE, writeSplit);
+        onWrite(writeSplit);
         value++;
     }
 
@@ -150,8 +150,7 @@ public final class ConsistencyBScenario extends Scenario {
             Split readSplit = Reporter.startEvent();
             Map<String, ByteBuffer> data = db.read(key, readColumns);
             readValues.put(System.nanoTime(), data.get(VALE_COLUMN));
-            Reporter.addEvent(Reporter.STOPWATCH_READ, readSplit);
-            Reporter.addEvent(Reporter.STOPWATCH_READ_TIME_SERIES, readSplit);
+            onRead(readSplit);
         }
     }
 

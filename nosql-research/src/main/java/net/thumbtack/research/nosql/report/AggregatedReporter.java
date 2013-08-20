@@ -39,10 +39,20 @@ public class AggregatedReporter {
         eventUpdater = new BatchUpdater<Event>("aggregated-event", BUFFER_SIZE, config.getReportFlushInterval()) {{
             addEvent(EVENT_OLD_VALUE, new FlushEvent<Event>() {
                 public void flush(Collection<Event> buffer) {
-                    long count = Reporter.getCount(Reporter.STOPWATCH_READ_TIME_SERIES);
-
+                    long readCount = Reporter.getCount(Reporter.STOPWATCH_READ_TIME_SERIES);
+                    double readMean = Reporter.getMean(Reporter.STOPWATCH_READ_TIME_SERIES);
+                    long writeCount = Reporter.getCount(Reporter.STOPWATCH_WRITE_TIME_SERIES);
+                    double writeMean = Reporter.getMean(Reporter.STOPWATCH_WRITE_TIME_SERIES);
                     Reporter.reset(Reporter.STOPWATCH_READ_TIME_SERIES);
-                    tslog.debug("{}\t{}\t{}", new Object[]{System.nanoTime(), buffer.size(), count});
+                    Reporter.reset(Reporter.STOPWATCH_WRITE_TIME_SERIES);
+                    tslog.debug("{}\t{}\t{}\t{}\t{}\t{}", new Object[]{
+                            System.nanoTime(),
+                            readCount,
+                            readMean,
+                            writeCount,
+                            writeMean,
+                            buffer.size()
+                    });
                 }
             });
         }};

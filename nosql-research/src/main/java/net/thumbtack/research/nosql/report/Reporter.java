@@ -15,6 +15,7 @@ public class Reporter {
 	public static final String STOPWATCH_READ = "read";
 	public static final String STOPWATCH_READ_TIME_SERIES = "read_time_series";
 	public static final String STOPWATCH_WRITE = "write";
+	public static final String STOPWATCH_WRITE_TIME_SERIES = "write_time_series";
 	public static final String STOPWATCH_FAILURE = "failure";
 	public static final String STOPWATCH_VALUE_FAILURE = "valueFailure";
 
