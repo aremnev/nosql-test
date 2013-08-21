@@ -39,7 +39,7 @@ public class BatchUpdater<T> {
 	 * @param bufferSize maximum size of buffer (when reached buffer is flushed)
 	 * @param flushInterval interval to sue for periodical buffer flushing
 	 */
-	public BatchUpdater(String name, int bufferSize, final int flushInterval) {
+	public BatchUpdater(String name, int bufferSize) {
 		this.name = name;
 		this.bufferSize = bufferSize;
 
@@ -51,23 +51,25 @@ public class BatchUpdater<T> {
 		synchronized (instances) {
 			instances.add(this);
 		}
+    }
 
-		// create and run periodical flusher thread
-		if (flushInterval > 0) {
-			TimerTask task = new TimerTask() {
-				@Override
-				public void run() {
-					for (int id : executors.keySet()) {
-						executors.get(id).execute(new ExecutorTask(id));
-					}
-				}
-			};
-			flushTimer = new Timer();
-			flushTimer.schedule(task, flushInterval, flushInterval);
-		}
-	}
+    public void startFlushTimer(final int flushInterval) {
+        // create and run periodical flusher thread
+        if (flushInterval > 0) {
+            TimerTask task = new TimerTask() {
+                @Override
+                public void run() {
+                    for (int id : executors.keySet()) {
+                        executors.get(id).execute(new ExecutorTask(id));
+                    }
+                }
+            };
+            flushTimer = new Timer();
+            flushTimer.schedule(task, flushInterval, flushInterval);
+        }
+    }
 
-	/**
+    /**
 	 * Flush buffers and shutdown all executors
 	 */
 	public void cleanup() {

@@ -40,7 +40,7 @@ public class AggregatedReporter {
 
     public static void configure(Configurator config) {
         tslog.debug("Time\tWrites\tReads\tErrors\tErrors on slow\tRead avg\tWrite avg");
-        eventUpdater = new BatchUpdater<Event>("aggregated-event", BUFFER_SIZE, config.getReportFlushInterval()) {{
+        eventUpdater = new BatchUpdater<Event>("aggregated-event", BUFFER_SIZE) {{
             addEvent(EVENT_OLD_VALUE, new FlushEvent<Event>() {
                 public void flush(Collection<Event> buffer) {
                     long readCount = Reporter.getCount(Reporter.STOPWATCH_READ_TIME_SERIES);
@@ -74,6 +74,10 @@ public class AggregatedReporter {
     public static void addEvent(int type, boolean unique) {
         Event event = new Event(System.nanoTime(), unique);
         eventUpdater.add(type, event);
+    }
+
+    public static void startFlushTimer(final int flushINterval) {
+        eventUpdater.startFlushTimer(flushINterval);
     }
 
     public static void stop() {

@@ -17,6 +17,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static net.thumbtack.research.nosql.report.Reporter.*;
+import static net.thumbtack.research.nosql.report.AggregatedReporter.*;
 
 /**
  * User: vkornev
@@ -80,6 +81,8 @@ public final class Researcher {
                 throw new RuntimeException(e);
             }
         }
+
+        startFlushTimer(config.getReportFlushInterval());
 
 	    log.info("Running tests with {} actions...", config.getScWrites());
         while (threadPool.getActiveCount() > 0) {}

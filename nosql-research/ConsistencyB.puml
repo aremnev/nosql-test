@@ -1,0 +1,30 @@
+@startuml
+
+== Generation Old ==
+Client --[#0000FF]> Node1 : write (k, Old) ?
+activate Node1
+Node1 --[#0000FF]> Client : write (k, Old) !
+deactivate Node1
+...
+
+== Generation New ==
+Client --[#0000FF]> Node1 : write (k, New) ?
+activate Node1
+Client -> Node1 : read(k)?
+Node1 -[#0000FF]-> Node2 : replicate (k, New) ?
+activate Node2
+Node2 -[#0000FF]-> Node1 : replicate (k, New) !
+deactivate Node2
+Node1 --[#0000FF]> Client : write(k, New)!
+deactivate Node1
+Node1 -> Client: read(k) = New
+Node1 -[#0000FF]-> Node3 : replicate (k, New) ?
+activate Node3
+Client -> Node2 : read(k)?
+Client -> Node3 : read(k)?
+Node2 -> Client: read(k) = New
+Node3 -> Client: read(k) = Old
+Node3 -[#0000FF]-> Node1 : replicate (k, New) !
+deactivate Node3
+
+@enduml
