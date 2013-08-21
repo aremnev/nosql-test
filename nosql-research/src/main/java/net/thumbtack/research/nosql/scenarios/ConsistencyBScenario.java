@@ -164,6 +164,7 @@ public final class ConsistencyBScenario extends Scenario {
         StringBuilder detailedString = new StringBuilder();
         long oldTimestamp = 0;
         long firstValue = 0;
+        boolean isError = false;
         for (Long time : readValues.keySet()) {
             long value = 0L;
             ByteBuffer buffer = readValues.get(time);
@@ -175,8 +176,7 @@ public final class ConsistencyBScenario extends Scenario {
                 firstValue = value;
             }
             if (oldTimestamp > value) {
-                Reporter.addEvent(Reporter.STOPWATCH_FAILURE);
-                AggregatedReporter.addEvent(AggregatedReporter.EVENT_OLD_VALUE, db.isSlow());
+                isError = true;
             }
             if (detailedLog.isDebugEnabled()) {
                 if (firstValue == value) {
@@ -194,6 +194,10 @@ public final class ConsistencyBScenario extends Scenario {
         }
         if (detailedLog.isDebugEnabled()) {
             detailedLog.debug("{}\t{}", key, detailedString.toString());
+        }
+        if (isError) {
+            Reporter.addEvent(Reporter.STOPWATCH_FAILURE);
+            AggregatedReporter.addEvent(AggregatedReporter.EVENT_OLD_VALUE, db.isSlow());
         }
 
         readValues.clear();

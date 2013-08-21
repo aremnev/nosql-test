@@ -41,7 +41,7 @@ public final class ConsistencyCScenario extends Scenario {
     private static int readersCount = 0;
     private static String[] groupKeys;
     private static String[] groupReadKey;
-    private static boolean[] groupIsWritting;
+    private static boolean[] groupIsWriting;
 
     private static Map<Long, ByteBuffer> groupReadValues;
     private static Semaphore groupReadSemaphore;
@@ -79,7 +79,7 @@ public final class ConsistencyCScenario extends Scenario {
                 this.writesCount = config.getScWrites() / (config.getScThreads() / rolesCount);
                 groupKeys = createKeys();
                 groupReadKey = new String[1];
-                groupIsWritting = new boolean[1];
+                groupIsWriting = new boolean[1];
                 groupReadValues = new LinkedHashMap<>();
                 groupReadSemaphore = new Semaphore(readersCount);
                 groupAggrSemaphore = new Semaphore(0);
@@ -94,7 +94,7 @@ public final class ConsistencyCScenario extends Scenario {
             }
             keys = groupKeys;
             readKey = groupReadKey;
-            isWriting = groupIsWritting;
+            isWriting = groupIsWriting;
             readValues = groupReadValues;
             readSemaphore = groupReadSemaphore;
             aggrSemaphore = groupAggrSemaphore;

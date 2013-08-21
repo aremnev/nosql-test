@@ -2,6 +2,7 @@ package net.thumbtack.research.nosql.clients;
 
 import net.thumbtack.research.nosql.Configurator;
 import net.thumbtack.research.nosql.utils.StringSerializer;
+import org.apache.cassandra.locator.NetworkTopologyStrategy;
 import org.apache.cassandra.locator.SimpleStrategy;
 import org.apache.cassandra.thrift.*;
 import org.apache.thrift.TException;
@@ -30,6 +31,10 @@ public final class CassandraClient implements Client {
 
     private static final String REPLICATION_FACTOR_PROPERTY = "cassandra.replicationFactor";
     private static final String DEFAULT_REPLICATION_FACTOR = "1";
+    private static final String REPLICATION_STRATEGY_PROPERTY = "cassandra.replicationStrategy";
+    private static final String DEFAULT_REPLICATION_STRATEGY = "SimpleStrategy";
+    private static final String STRATEGY_OPTIONS_PROPERTY = "cassandra.strategyOptions";
+    private static final String DEFAULT_STRATEGY_OPTIONS = "{}";
 
     private static final String STRATEGY_REPLICATION_FACTOR_PROPERTY = "replication_factor";
 
@@ -40,7 +45,12 @@ public final class CassandraClient implements Client {
     private ConsistencyLevel readConsistencyLevel;
     private ConsistencyLevel writeConsistencyLevel;
 
+    private String keySpace;
     private String columnFamily;
+    private String replicationFactor;
+    private String replicationStrategy;
+    private String replicationOptions;
+
     private int retries;
 
     private Cassandra.Client client;
@@ -73,11 +83,13 @@ public final class CassandraClient implements Client {
             client = new Cassandra.Client(new TBinaryProtocol(transport));
             transport.open();
 
-            String keySpace = configurator.getString(KEY_SPACE_PROPERTY, DEFAULT_KEY_SPACE);
-            String replicationFactor = configurator.getString(REPLICATION_FACTOR_PROPERTY, DEFAULT_REPLICATION_FACTOR);
+            keySpace = configurator.getString(KEY_SPACE_PROPERTY, DEFAULT_KEY_SPACE);
+            replicationFactor = configurator.getString(REPLICATION_FACTOR_PROPERTY, DEFAULT_REPLICATION_FACTOR);
+            replicationStrategy = configurator.getString(REPLICATION_STRATEGY_PROPERTY, DEFAULT_REPLICATION_STRATEGY);
+            replicationOptions = configurator.getString(STRATEGY_OPTIONS_PROPERTY, DEFAULT_STRATEGY_OPTIONS);
             columnFamily = configurator.getString(COLUMN_FAMILY_PROPERTY, DEFAULT_COLUMN_FAMILY);
 
-            setReplicationFactor(keySpace, replicationFactor);
+            setReplicationFactor();
 
             client.set_keyspace(keySpace);
 
@@ -197,11 +209,19 @@ public final class CassandraClient implements Client {
         return superColumns.get(name);
     }
 
-    private void setReplicationFactor(String keySpace, String replicationFactor) throws TException {
+    private void setReplicationFactor() throws TException {
         KsDef ksDef;
         try {
             ksDef = client.describe_keyspace(keySpace);
-            ksDef.strategy_options.put(STRATEGY_REPLICATION_FACTOR_PROPERTY, replicationFactor);
+            ksDef.strategy_options.clear();
+            if (SimpleStrategy.class.getSimpleName().equals(replicationStrategy)) {
+                ksDef.setStrategy_class(SimpleStrategy.class.getName());
+                ksDef.strategy_options.put(STRATEGY_REPLICATION_FACTOR_PROPERTY, replicationFactor);
+            }
+            else if (NetworkTopologyStrategy.class.getSimpleName().equals(replicationStrategy)) {
+                ksDef.setStrategy_class(NetworkTopologyStrategy.class.getName());
+                ksDef.strategy_options.putAll(stringToMap(replicationOptions));
+            }
             ksDef.cf_defs.clear();
             client.system_update_keyspace(ksDef);
         }
@@ -209,10 +229,16 @@ public final class CassandraClient implements Client {
             List<CfDef> cfDefList = new ArrayList<>();
             CfDef cfDef = new CfDef(keySpace, columnFamily);
             cfDefList.add(cfDef);
-            ksDef = new KsDef(keySpace, SimpleStrategy.class.getName(), cfDefList);
-            Map<String, String> strategyOptions = new HashMap<>();
-            strategyOptions.put(STRATEGY_REPLICATION_FACTOR_PROPERTY, replicationFactor);
-            ksDef.setStrategy_options(strategyOptions);
+            ksDef = new KsDef(keySpace, "", cfDefList);
+            ksDef.setStrategy_options(new HashMap<String, String>());
+            if (SimpleStrategy.class.getSimpleName().equals(replicationStrategy)) {
+                ksDef.setStrategy_class(SimpleStrategy.class.getName());
+                ksDef.strategy_options.put(STRATEGY_REPLICATION_FACTOR_PROPERTY, replicationFactor);
+            }
+            else if (NetworkTopologyStrategy.class.getSimpleName().equals(replicationStrategy)) {
+                ksDef.setStrategy_class(NetworkTopologyStrategy.class.getName());
+                ksDef.strategy_options.putAll(stringToMap(replicationOptions));
+            }
             client.system_add_keyspace(ksDef);
         }
     }
@@ -221,4 +247,18 @@ public final class CassandraClient implements Client {
     public boolean isSlow() {
         return slow;
     }
+
+    protected Map<String, String> stringToMap(String str) {
+        Map<String, String> result = new HashMap<>();
+        str = str.replace("{", "").replace("}", "");
+        if (str.trim().length() == 0) {
+            return  result;
+        }
+        for (String item: str.split(";")) {
+            String[] array = item.split(":");
+            result.put(array[0].trim(), array[1].trim());
+        }
+        return result;
+    }
+
 }
